@@ -472,67 +472,89 @@ export class FacilityWorld {
   }
 
   buildProps() {
-    for (const id of ["storage","medical","power","research","testing","pap"]) {
-      for (let i=0;i<3;i++) {
-        const x=-6+(i*6);
-        this.addProp(id,x,-6,2.3,1.7,1.3,i===1?0x4d6269:0x303f45);
-        this.box(this.scene,this.rooms.get(id).x+x,1.78,this.rooms.get(id).z-6,2.1,0.12,1.1,this.materials.trim);
-      }
-    }
-    this.addProp("storage",-6,5,2.8,2.6,2.8,0x7b5b3e);
-    this.addProp("storage",-6,5,2.25,0.08,2.25,0xc18b48,{collider:false});
-    this.addProp("lab",-6,2,2.8,2.1,4.5,0x263a43);
-    this.addProp("lab",-6,2,2.55,1.8,0.1,0x56bec0,{collider:false});
-    this.addProp("medical",5,4,3,1.4,1.5,0x506b67);
-    this.addProp("power",-5,5,4,2.5,2.2,0x303b3d);
-    this.addProp("testing",0,-5,5.5,0.7,5.5,0x6d3230);
-    this.addProp("pap",0,0,5.5,1,5.5,0x233c44);
-    this.addProp("arena",0,0,4,1,4,0x4c3e55);
-    // Room-specific furniture and practical clutter give each space a readable purpose.
-    // Supply depot: steel shelving, crates and stacked cases.
-    for(let side=0;side<2;side++){
-      const x=side?7:-7;
-      this.addProp("storage",x,-1,0.45,3.2,5.4,0x59645f,{collider:false});
-      for(let y=0;y<3;y++)this.addProp("storage",x,-2+y*1.15,4.8,0.12,0.9,0x68766d,{collider:false});
-    }
-    // Infirmary: two beds with raised headboards and privacy screens.
-    for(const x of [-5,5]){
-      this.addProp("medical",x,0,2.4,0.55,4.8,0x9a9a87,{collider:false});
-      this.addProp("medical",x,-1.75,2.4,0.35,0.22,0x657c75,{collider:false});
-      this.addProp("medical",x,0,2.0,0.18,3.7,0xb5b6a8,{collider:false});
-    }
-    // Biology lab: work benches and observation tanks.
-    for(const x of [-5,5]){
-      this.addProp("research",x,0,2.4,1.1,3.8,0x53625d,{collider:false});
-      for(let i=0;i<3;i++)this.addProp("research",x-0.6+i*0.6,-0.5,0.18,0.16,0.18,0xc1b99c,{collider:false});
-    }
-    // Generator hall: cable cabinets and chunky pipe runs.
-    for(const z of [-5,5]){
-      this.addProp("power",-7,z,1.4,3.6,1.5,0x3b4644,{collider:false});
-      this.addProp("power",-7,z,1.45,0.12,1.52,0xb28a4f,{collider:false});
-    }
-    // Observation ward: reinforced glass cells and floor warning stripes.
-    for(const x of [-6,6]){
-      this.addProp("testing",x,-1,0.35,3.2,5.5,0x637b78,{collider:false});
-      this.addProp("testing",x,0.68,0.42,0.12,5.3,0xb28d53,{collider:false});
-    }
-    // Reactor chamber: segmented containment pylons around the central machine.
-    for(let i=0;i<4;i++){
-      const a=i*Math.PI/2, x=Math.cos(a)*5.6,z=Math.sin(a)*5.6;
-      this.addProp("pap",x,z,0.85,3.6,0.85,0x596b61,{collider:false});
-      this.addProp("pap",x,z,1.05,0.12,1.05,0xb2a16d,{collider:false});
-    }
-    for (const room of ROOM_DATA) {
-      for (const side of [-1,1]) {
-        this.addProp(room.id,side*7,0,0.7,3.6,0.7,0x2a363b);
-        this.box(this.scene,room.x+side*7,3.7,room.z,0.95,0.18,0.95,this.materials.amber,{castShadow:false});
-      }
-      for (let i=0;i<3;i++) {
-        this.box(this.scene,room.x-6+i*6,0.2,room.z+7,1.2,0.4,1.2,this.materials.black);
-      }
-    }
-  }
+    // SECURITY CHECKPOINT — reception desk, inspection barriers and a staffed control position.
+    this.addProp("start",-5,-4,4.2,1.05,1.25,0x454b45);
+    this.addProp("start",-5,-4.05,3.7,0.12,1.3,0x8c7958,{collider:false});
+    this.addProp("start",5,5,0.42,1.5,5.8,0x4b514c,{collider:false});
+    this.addProp("start",5,5,0.5,1.65,0.12,0x9b8156,{collider:false});
+    this.addProp("start",-7,3,0.8,2.4,0.8,0x555a50,{collider:false});
 
+    // DECONTAMINATION — paired wash-down frames and a drain channel.
+    for(const x of [-5,5]) {
+      this.addProp("lab",x,-1,0.18,3.35,0.18,0x6f7770,{collider:false});
+      this.addProp("lab",x,0.68,0.18,0.18,0.18,0x6f7770,{collider:false});
+      this.addProp("lab",x,0.5,0.18,0.12,0.12,0x9b8156,{collider:false});
+    }
+    this.addProp("lab",0,0,0.6,0.06,11,0x59635c,{collider:false});
+    this.addProp("lab",0,-5,4.2,1.1,1.4,0x33413d);
+    this.addProp("lab",0,-5,4.25,0.8,0.12,0.9,0x9a9b89,{collider:false});
+
+    // SUPPLY DEPOT — two steel pallet racks with deliberately uneven stock.
+    for(const x of [-7,7]) {
+      this.addProp("storage",x,-1,0.42,3.4,5.8,0x515b57,{collider:false});
+      for(const y of [0.55,1.65,2.75]) {
+        this.addProp("storage",x,y,4.8,0.12,0.72,0x758078,{collider:false});
+      }
+      for(const [z,h,w] of [[-2.5,0.62,1.2],[0.1,0.82,1.45],[2.25,0.52,0.9]]) {
+        this.addProp("storage",x,z,w,h,0.72,0x786044,{collider:false});
+      }
+    }
+    this.addProp("storage",-2,5,2.1,1.5,2.2,0x6c553d);
+    this.addProp("storage",-2,5,2.15,0.1,2.25,0xa17b4e,{collider:false});
+
+    // INFIRMARY — two beds with frames, pillows and bedside equipment.
+    for(const x of [-5,5]) {
+      this.addProp("medical",x,0,2.5,0.48,4.4,0xaaa99a,{collider:false});
+      this.addProp("medical",x,-1.8,2.5,0.58,0.22,0x586b64,{collider:false});
+      this.addProp("medical",x,1.75,2.5,0.82,0.2,0x586b64,{collider:false});
+      this.addProp("medical",x,1.05,2.5,0.18,0.26,0xb6b5a5,{collider:false});
+      this.addProp("medical",x+1.65,-2.7,0.7,1.2,0.7,0x46534e,{collider:false});
+    }
+
+    // GENERATOR HALL — separate transformer cabinets and overhead cable trays.
+    for(const z of [-5,5]) {
+      this.addProp("power",-6,z,1.8,3.5,2.1,0x343e3b,{collider:false});
+      this.addProp("power",-6,z,1.9,0.16,2.2,0x9a794d,{collider:false});
+      this.addProp("power",-6,z,0.3,2.2,0.35,0x9b9b86,{collider:false});
+      this.addProp("power",6,z,1.1,2.8,1.2,0x4c5550,{collider:false});
+    }
+    this.addProp("power",0,-7,0.35,0.35,3.8,0x68716a,{collider:false});
+    this.addProp("power",0,-7,0.38,0.08,3.9,0xa37c4d,{collider:false});
+
+    // BIOLOGY LAB — work islands and a sealed specimen tank.
+    for(const x of [-5,5]) {
+      this.addProp("research",x,0,2.5,1.05,3.7,0x4d5a54,{collider:false});
+      this.addProp("research",x,0,2.55,0.08,3.8,0xa28a62,{collider:false});
+      for(let i=0;i<3;i++) this.addProp("research",x-0.7+i*0.7,-0.45,0.2,0.18,0.24,0xb6b29c,{collider:false});
+    }
+    this.addProp("research",0,5,2.4,3.2,2.4,0x3a4945,{collider:false});
+    this.addProp("research",0,5,2.42,2.8,2.1,0x55736b,{collider:false});
+    this.addProp("research",0,5,2.44,0.12,2.15,0xa18c62,{collider:false});
+
+    // OBSERVATION WARD — reinforced glass viewing bays with solid lower plinths.
+    for(const x of [-6,6]) {
+      this.addProp("testing",x,-1,0.48,1.25,5.2,0x485650,{collider:false});
+      this.addProp("testing",x,0.68,0.52,2.2,5.25,0x61756e,{collider:false});
+      this.addProp("testing",x,0.7,0.55,0.12,5.3,0xa28a62,{collider:false});
+    }
+    this.addProp("testing",0,-5,4.5,1.2,1.1,0x454e49,{collider:false});
+
+    // REACTOR CHAMBER — four containment pylons around a low central reactor housing.
+    this.addProp("pap",0,0,4.6,1.05,4.6,0x263a38,{collider:false});
+    this.addProp("pap",0,0,4.1,0.12,4.1,0x9b8052,{collider:false});
+    for(let i=0;i<4;i++) {
+      const angle=i*Math.PI/2,x=Math.cos(angle)*5.7,z=Math.sin(angle)*5.7;
+      this.addProp("pap",x,z,0.9,3.5,0.9,0x4d5b53,{collider:false});
+      this.addProp("pap",x,z,1.02,0.14,1.02,0xa18b5e,{collider:false});
+    }
+
+    // CORE ACCESS — sparse cover and heavy structural supports; keep the combat floor open.
+    for(const [x,z] of [[-6,-6],[6,-6],[-6,6],[6,6]]) {
+      this.addProp("arena",x,z,1.15,3.9,1.15,0x424b46,{collider:false});
+      this.addProp("arena",x,z,1.3,0.16,1.3,0x8b754f,{collider:false});
+    }
+    this.addProp("arena",0,0,3.2,0.5,3.2,0x353f3b,{collider:false});
+  }
   buildHazards() {
     const glow=this.mat(0x9acb55,0.3,0,0x5d8c25);
     const stripe=this.mat(0xc49b53,0.7,0.05);
