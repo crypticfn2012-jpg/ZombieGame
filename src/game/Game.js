@@ -20,9 +20,9 @@ export class BlacksiteGame {
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure=1.12;
     this.scene=new THREE.Scene();
-    // The first-person weapon is parented to the camera, so the camera must be in the scene graph.
-    this.scene.add(this.camera);
     this.camera=new THREE.PerspectiveCamera(85,window.innerWidth/window.innerHeight,0.08,150);
+    // First-person weapons are camera children; add the initialized camera to the scene graph.
+    this.scene.add(this.camera);
     this.audio=new AudioSystem();
     this.save=new SaveSystem();
     this.world=new FacilityWorld(this.scene);
