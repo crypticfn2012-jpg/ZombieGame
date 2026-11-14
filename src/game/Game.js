@@ -48,6 +48,7 @@ export class BlacksiteGame {
     this.spawnsRemaining=0;
     this.spawnTimer=0;
     this.waveBreak=0;
+    this.radiationTimer=0;
     this.bossSpawned=false;
     this.runSeconds=0;
     this.runSaved=false;
@@ -158,6 +159,7 @@ export class BlacksiteGame {
     this.spawnsRemaining=0;
     this.spawnTimer=0;
     this.waveBreak=0;
+    this.radiationTimer=0;
     this.bossSpawned=false;
     this.runSeconds=0;
     this.runSaved=false;
@@ -395,6 +397,11 @@ export class BlacksiteGame {
     if(this.state!=="playing") return;
     this.runSeconds+=dt;
     this.player.update(dt,this.progression.perks);
+    this.radiationTimer=Math.max(0,this.radiationTimer-dt);
+    if(this.world.isInRadiation(this.camera.position)&&this.radiationTimer<=0) {
+      this.player.damage(4);
+      this.radiationTimer=2.1;
+    }
     this.weapons.fire(this.zombies,this.progression.perks,dt,this.elapsed);
     this.weapons.update();
     this.zombies.update(dt,this.player,this.world,this.round);
