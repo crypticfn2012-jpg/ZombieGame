@@ -47,10 +47,10 @@ export class FacilityWorld {
     this.powerOn = false;
     this.machineRefs = {};
     this.materials = {
-      wall: this.mat(0x34434b, 0.92, 0.08),
+      wall: this.mat(0x3b494e, 0.92, 0.02),
       darkWall: this.mat(0x1b272e, 0.9, 0.1),
-      floor: this.mat(0x343f43, 0.88, 0.15),
-      trim: this.mat(0x879294, 0.72, 0.16),
+      floor: this.mat(0x414b4e, 0.9, 0.02),
+      trim: this.mat(0x758286, 0.75, 0.08),
       metal: this.mat(0x6f7c7d, 0.62, 0.3),
       black: this.mat(0x11191e, 0.45, 0.45),
       cyan: this.mat(0x38d9dc, 0.35, 0.18, 0x0c6267),
@@ -62,7 +62,7 @@ export class FacilityWorld {
   }
 
   mat(color, roughness=0.8, metalness=0.1, emissive=0x000000) {
-    return new THREE.MeshToonMaterial({ color, map:surfaceTexture, gradientMap:toonRamp, emissive, emissiveIntensity: emissive ? 0.45 : 0 });
+    return new THREE.MeshToonMaterial({ color, gradientMap:toonRamp, emissive, emissiveIntensity: emissive ? 0.3 : 0 });
   }
 
   box(parent, x, y, z, sx, sy, sz, material, extra={}) {
@@ -94,6 +94,7 @@ export class FacilityWorld {
     const fill = new THREE.PointLight(0x3acbd0, 7, 42, 2);
     fill.position.set(0, 4, -22);
     this.scene.add(fill);
+    this.buildExterior();
     for (const room of ROOM_DATA) this.buildRoom(room);
     for (const link of DOOR_DATA) this.buildDoor(link);
     this.buildProps();
@@ -101,6 +102,35 @@ export class FacilityWorld {
     this.buildAmbientDetails();
     this.spawnPoints = this.windows.map(win=>({room:win.roomId,x:win.outside.x,z:win.outside.z,window:win}));
     this.baseColliders = this.colliders.filter(c=>!c.door).map(c=>({...c}));
+  }
+
+  buildExterior() {
+    const ground=this.mat(0x222c30,0.96,0.02);
+    const fence=this.mat(0x3d4a4e,0.75,0.18);
+    const concrete=this.mat(0x566166,0.9,0.02);
+    const hazard=this.mat(0xb38b4e,0.72,0.08);
+    this.box(this.scene,0,-0.94,-22,108,0.22,112,ground,{castShadow:false});
+    // A fenced service yard surrounds the nine-room research facility.
+    for(const x of [-46,46]) {
+      this.box(this.scene,x,2.2,-22,0.35,4.4,104,fence,{castShadow:false});
+      for(let z=-70;z<=26;z+=8)this.box(this.scene,x,2.2,z,0.65,4.6,0.65,concrete,{castShadow:false});
+    }
+    for(const z of [-74,30]) {
+      this.box(this.scene,0,2.2,z,92,4.4,0.35,fence,{castShadow:false});
+      for(let x=-44;x<=44;x+=8)this.box(this.scene,x,2.2,z,0.65,4.6,0.65,concrete,{castShadow:false});
+    }
+    // A few low voxel cargo stacks make the perimeter feel like a real compound.
+    for(const [x,z,w,d,c] of [[-38,-60,8,4,0x435158],[37,-56,7,4,0x4b5557],[-38,15,7,5,0x46545a],[37,17,8,4,0x3d4e55]]) {
+      this.box(this.scene,x,1.2,z,w,2.4,d,this.mat(c),{castShadow:false});
+      this.box(this.scene,x,2.45,z,w+0.08,0.12,d+0.08,hazard,{castShadow:false});
+    }
+    // Simple square floodlight pylons at the outer corners.
+    for(const [x,z] of [[-43,-70],[43,-70],[-43,26],[43,26]]) {
+      this.box(this.scene,x,3,z,0.65,6,0.65,concrete,{castShadow:false});
+      this.box(this.scene,x,6.15,z,1.7,0.22,0.8,this.materials.amber,{castShadow:false});
+      const light=new THREE.PointLight(0xffc777,2.2,22,2);
+      light.position.set(x,5.8,z);this.scene.add(light);
+    }
   }
 
   hasDoorAt(room, side) {
@@ -298,7 +328,7 @@ export class FacilityWorld {
 
   addProp(roomId, x,z, sx,sy,sz,color, options={}) {
     const room=this.rooms.get(roomId);
-    const material=typeof color==="number" ? new THREE.MeshToonMaterial({color,map:surfaceTexture,gradientMap:toonRamp}) : color;
+    const material=typeof color==="number" ? new THREE.MeshToonMaterial({color,gradientMap:toonRamp}) : color;
     const mesh=this.box(this.scene,room.x+x,sy/2,room.z+z,sx,sy,sz,material);
     if(options.collider!==false) this.addCollider(room.x+x,room.z+z,sx+0.25,sz+0.25);
     return mesh;
