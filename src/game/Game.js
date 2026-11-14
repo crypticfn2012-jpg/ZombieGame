@@ -53,6 +53,7 @@ export class BlacksiteGame {
     this.lastFrame=performance.now();
     this.elapsed=0;
     this.hitPulse=0;
+    this.hudRefresh=0;
     this.mouseDown=false;
     this.resizeObserver=null;
     this.bindEvents();
@@ -391,11 +392,15 @@ export class BlacksiteGame {
     this.weapons.update();
     this.zombies.update(dt,this.player,this.world,this.round);
     this.updateWave(dt);
-    this.ui.setHealth(this.player.health,this.player.maxHealth,this.player.armor);
-    this.ui.setPoints(this.progression.points);
-    this.ui.setAmmo(this.weapons.hud());
-    this.ui.setPerks(this.progression.perks);
-    this.ui.setZombies(this.zombies.count()+this.spawnsRemaining);
+    this.hudRefresh-=dt;
+    if(this.hudRefresh<=0) {
+      this.hudRefresh=0.12;
+      this.ui.setHealth(this.player.health,this.player.maxHealth,this.player.armor);
+      this.ui.setPoints(this.progression.points);
+      this.ui.setAmmo(this.weapons.hud());
+      this.ui.setPerks(this.progression.perks);
+      this.ui.setZombies(this.zombies.count()+this.spawnsRemaining);
+    }
     const item=this.findInteractable();
     if(item!==this.interaction) {
       this.interaction=item;
