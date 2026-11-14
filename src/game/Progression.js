@@ -181,9 +181,9 @@ export class ProgressionSystem {
   }
 
   documentText(id) {
-    if(id==="document-a") return "INCIDENT 07 / 03:17. Isolation on Sublevel C failed after the night crew reported a low-frequency signal in the ventilation system. Subject R-09 breached the observation glass without touching it. Security was ordered to seal the floor.";
-    if(id==="document-b") return "SUBJECT R-09 / POST-MORTEM REVIEW. Cardiac activity stopped, but the subject continued to respond to the signal. The response became stronger when the reactor was powered. The project director ordered all recordings classified.";
-    return "FINAL TRANSMISSION / DR. VALE. Northstar did not create the signal. We amplified it. Something below the reactor has been answering for months. If this reaches the surface, do not restore the uplink."
+    if(id==="document-a") return "NORTHSTAR / INTERNAL INCIDENT REPORT 07-A / 14 OCT 1996. The deep-array team recorded a repeating tone beneath the salt basin at 02:13. The sound was present on every microphone, including disconnected units. At 03:17, six staff members began repeating the same sequence of numbers. Security sealed Sublevel C. The recording was not destroyed.";
+    if(id==="document-b") return "PROJECT LANTERN / BIOLOGY NOTE 19. R-09 was exposed to contaminated coolant after the first reactor test. The isotope load should have killed the subject within minutes. Instead, the tissue began responding to the low-frequency pulse. The subject is not contagious. The signal is synchronising the nervous system after death. Do not restart the generator.";
+    return "FINAL TRANSMISSION / DR. ELIAS VALE / 14 OCT 1996. Northstar did not create the signal. We found it below the basin and built the reactor to listen. Every pulse is answered from somewhere deeper. The dead are not trying to escape. They are following a call. If you can hear this, destroy the array and leave the reactor dark."
   }
 
   readTerminal() {
