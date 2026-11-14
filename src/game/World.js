@@ -435,7 +435,7 @@ export class FacilityWorld {
     for(const x of [-5,5]){
       this.addProp("medical",x,0,2.4,0.55,4.8,0x9a9a87,{collider:false});
       this.addProp("medical",x,-1.75,2.4,0.35,0.22,0x657c75,{collider:false});
-      this.addProp("medical",x,0.78,0,2.0,0.18,3.7,0xb5b6a8,{collider:false});
+      this.addProp("medical",x,0,2.0,0.18,3.7,0xb5b6a8,{collider:false});
     }
     // Biology lab: work benches and observation tanks.
     for(const x of [-5,5]){
