@@ -97,99 +97,124 @@ export class WeaponSystem {
   get current() { return this.inventory[this.slot] || this.inventory[0]; }
 
   refreshModel() {
-    while(this.model.children.length) {
-      const obj=this.model.children.pop();
-      this.model.remove(obj);
-      const materials=new Set();
-      obj.traverse?.(child=>{
-        child.geometry?.dispose?.();
-        if(Array.isArray(child.material)) child.material.forEach(material=>materials.add(material));
-        else if(child.material) materials.add(child.material);
+    for(const child of [...this.model.children]) {
+      this.model.remove(child);
+      child.traverse?.(node=>{
+        node.geometry?.dispose?.();
+        if(Array.isArray(node.material)) node.material.forEach(m=>m.dispose?.());
+        else node.material?.dispose?.();
       });
-      for(const material of materials) material.dispose?.();
     }
     const gun=this.current;
     if(!gun) return;
-    const material=(color,metal=0.35,rough=0.4,emissive=0)=>new THREE.MeshToonMaterial({color,gradientMap:toonRamp,emissive,emissiveIntensity:0.45});
-    const body=material(gun.upgraded?0x253a4b:gun.color,0.55,0.38,gun.upgraded?0x1d76a0:0);
-    const dark=material(0x11181e,0.7,0.35);
-    const trim=material(gun.upgraded?0x37d5e6:0x849397,0.75,0.27,gun.upgraded?0x0c6d78:0);
-    const add=(x,y,z,sx,sy,sz,mat) => {
-      const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat);
-      mesh.position.set(x,y,z);
-      mesh.castShadow=false;
-      mesh.frustumCulled=false;
-      mesh.renderOrder=999;
-      mat.depthTest=false;
-      mat.depthWrite=false;
-      mat.toneMapped=false;
-      this.model.add(mesh);
-      return mesh;
+    const palette=gun.upgraded
+      ? {body:0x263d4b,trim:0x46dce5,glow:0x12aebc}
+      : {body:gun.color,trim:0x89999a,glow:0x253238};
+    const makeMat=(color,metalness=0.35,roughness=0.42,emissive=0)=>new THREE.MeshStandardMaterial({
+      color,metalness,roughness,emissive,emissiveIntensity:gun.upgraded?0.65:0.12
+    });
+    const body=makeMat(palette.body,0.48,0.38);
+    const dark=makeMat(0x141c21,0.62,0.42);
+    const rubber=makeMat(0x20272a,0.05,0.82);
+    const metal=makeMat(0x78888a,0.82,0.28);
+    const accent=makeMat(palette.trim,0.7,0.3,gun.upgraded?palette.glow:0);
+    const glass=new THREE.MeshStandardMaterial({color:0x1b3b43,metalness:0.45,roughness:0.12,emissive:gun.upgraded?0x087b89:0x061a20,emissiveIntensity:0.7});
+    const add=(geometry,material,x,y,z,rx=0,ry=0,rz=0)=>{
+      const mesh=new THREE.Mesh(geometry,material);
+      mesh.position.set(x,y,z); mesh.rotation.set(rx,ry,rz);
+      mesh.castShadow=false; mesh.receiveShadow=false;
+      mesh.frustumCulled=false; mesh.renderOrder=999;
+      material.depthTest=false; material.depthWrite=false; material.toneMapped=false;
+      this.model.add(mesh); return mesh;
     };
-    add(0,0,0.02,0.19,0.14,0.56,body);
-    add(0,-0.105,0.12,0.15,0.22,0.16,dark);
-    add(0,0.018,-0.34,gun.id==="sniper"?0.1:0.075,0.07,gun.id==="shotgun"?0.6:0.42,dark);
-    add(0,0.08,-0.13,0.13,0.055,0.25,trim);
-    add(0.0,0.09,-0.22,0.075,0.075,0.13,gun.upgraded?trim:dark);
-    add(0.09,-0.03,0.08,0.035,0.11,0.18,trim);
+    const box=(x,y,z,sx,sy,sz,mat,rx=0,ry=0,rz=0)=>add(new THREE.BoxGeometry(sx,sy,sz),mat,x,y,z,rx,ry,rz);
+    const cyl=(x,y,z,r1,r2,len,mat,segments=12)=>add(new THREE.CylinderGeometry(r1,r2,len,segments),mat,x,y,z,Math.PI/2,0,0);
+    const sphere=(x,y,z,sx,sy,sz,mat)=>{const m=add(new THREE.SphereGeometry(1,10,8),mat,x,y,z);m.scale.set(sx,sy,sz);return m;};
     const longGun=["rifle","burst","tactical","sniper","smg","heavySmg","shotgun","autoShotgun","launcher"].includes(gun.id);
-    if(longGun) {
-      add(0,-0.13,-0.02,0.12,0.24,0.18,dark);
-      add(0,-0.27,-0.04,0.13,0.25,0.18,body);
-      add(0,0.12,-0.05,0.2,0.045,0.38,dark);
-      for(let i=0;i<4;i++) add(-0.07+i*0.045,0.15,-0.19,0.018,0.025,0.11,trim);
-      add(0,0.07,-0.54,0.12,0.075,0.1,dark);
-      add(0,-0.015,0.26,0.2,0.1,0.16,dark);
-      if(gun.id==="sniper"||gun.id==="tactical") {
-        add(0,0.23,-0.1,0.12,0.13,0.34,dark);
-        add(0,0.3,-0.1,0.24,0.08,0.15,trim);
-        add(0,-0.02,0.37,0.16,0.11,0.3,body);
-      }
-      if(gun.id==="shotgun"||gun.id==="autoShotgun") {
-        add(0,-0.11,0.39,0.17,0.13,0.28,trim);
-        add(0,-0.04,0.43,0.13,0.06,0.28,dark);
-      }
-      if(gun.id==="launcher") {
-        add(0,0.02,-0.25,0.28,0.24,0.6,body);
-        add(0,0.02,-0.58,0.32,0.28,0.12,trim);
-      }
-    } else {
-      add(0,0.075,-0.2,0.18,0.045,0.32,trim);
-      add(0,-0.18,0.13,0.12,0.12,0.12,body);
-      add(0,0.06,-0.34,0.1,0.05,0.16,dark);
+    // A readable receiver and barrel form the core silhouette; the remaining pieces
+    // are deliberately layered to give each class a distinct, finished profile.
+    box(0,0,0.015,longGun?0.22:0.19,0.17,longGun?0.48:0.32,body);
+    box(0,0.095,-0.045,longGun?0.2:0.17,0.045,0.24,metal);
+    box(0,0.018,-0.16,0.145,0.105,0.22,dark);
+    cyl(0,0.025,longGun?-0.53:-0.37,longGun?0.047:0.035,longGun?0.047:0.035,longGun?0.55:0.35,metal);
+    cyl(0,0.025,longGun?-0.82:-0.55,longGun?0.06:0.047,longGun?0.06:0.047,0.07,dark);
+    box(0,0.125,-0.19,0.12,0.035,0.3,dark);
+    // Top rail, front sight, rear sight and a compact optic.
+    box(0,0.15,-0.13,0.075,0.025,0.39,metal);
+    for(let i=0;i<5;i++) box(0,0.169,-0.29+i*0.075,0.09,0.012,0.025,accent);
+    box(0,0.19,-0.48,0.035,0.075,0.035,dark);
+    box(0,0.19,0.12,0.035,0.07,0.035,dark);
+    if(["rifle","burst","tactical","sniper","experimental"].includes(gun.id)) {
+      box(0,0.235,-0.12,0.105,0.12,0.24,dark);
+      box(0,0.3,-0.12,0.14,0.025,0.27,accent);
+      sphere(0,0.237,-0.12,0.047,0.045,0.09,glass);
     }
-    const sleeve=material(0x303b40,0.1,0.8), glove=material(0x171d21,0.2,0.8);
-    add(-0.11,-0.27,0.22,0.19,0.18,0.34,sleeve);
-    add(-0.04,-0.17,0.02,0.16,0.12,0.18,glove);
-    if(gun.id==="sniper") {
-      add(0,0.16,-0.02,0.08,0.11,0.25,dark);
-      add(0,0.22,-0.03,0.22,0.08,0.13,trim);
+    if(["rifle","burst","tactical","smg","heavySmg","sniper"].includes(gun.id)) {
+      // Angled shoulder stock and a proper pistol grip.
+      box(0,-0.025,0.29,0.17,0.13,0.35,body,0.08,0,0);
+      box(0,-0.18,0.06,0.12,0.24,0.15,rubber,0.18,0,0);
+      box(0,-0.31,0.07,0.15,0.045,0.16,dark);
+    }
+    if(["rifle","burst","tactical","smg","heavySmg","experimental"].includes(gun.id)) {
+      box(0,-0.19,-0.1,0.13,0.29,0.17,gun.id==="heavySmg"?accent:dark,0.04,0,0);
+      box(0,-0.34,-0.1,0.16,0.035,0.19,rubber);
+    }
+    if(gun.id==="pistol"||gun.id==="revolver") {
+      box(0,-0.15,0.065,0.13,0.24,0.16,rubber,0.22,0,0);
+      box(0,-0.275,0.075,0.15,0.035,0.17,dark);
+      box(0,0.13,-0.08,0.11,0.055,0.19,accent);
+      if(gun.id==="revolver") {
+        cyl(0,-0.005,0.045,0.105,0.105,0.14,metal,12);
+        for(let i=0;i<6;i++) {
+          const angle=i*Math.PI/3;
+          sphere(Math.sin(angle)*0.07,-0.005,0.045+Math.cos(angle)*0.07,0.025,0.025,0.025,dark);
+        }
+      }
     }
     if(gun.id==="shotgun"||gun.id==="autoShotgun") {
-      add(0,-0.01,0.43,0.13,0.11,gun.id==="autoShotgun"?0.38:0.28,body);
-      if(gun.id==="autoShotgun") add(0,-0.12,0.02,0.16,0.09,0.46,trim);
+      box(0,-0.01,0.31,0.19,0.14,0.36,body);
+      box(0,-0.13,-0.26,0.18,0.14,0.37,gun.id==="autoShotgun"?body:rubber);
+      cyl(0,0.04,-0.57,0.055,0.055,0.63,metal);
+      if(gun.id==="autoShotgun") cyl(0,-0.09,-0.46,0.06,0.06,0.48,dark);
+      else box(0,-0.13,-0.36,0.16,0.12,0.3,accent);
     }
-    if(gun.id==="tactical") {
-      add(0,0.16,-0.02,0.12,0.12,0.3,dark);
-      add(0,0.23,-0.02,0.23,0.08,0.12,trim);
-      add(0,-0.16,0.08,0.13,0.13,0.2,body);
+    if(gun.id==="sniper"||gun.id==="tactical") {
+      box(0,0.24,-0.08,0.13,0.12,0.36,dark);
+      cyl(0,0.24,-0.08,0.075,0.075,0.32,metal);
+      sphere(0,0.24,-0.25,0.065,0.065,0.025,glass);
+      box(0,-0.17,0.32,0.17,0.1,0.3,body);
     }
     if(gun.id==="heavySmg") {
-      add(0,-0.19,0.04,0.25,0.2,0.24,body);
-      add(0,0.12,-0.08,0.22,0.07,0.34,trim);
+      cyl(0,-0.2,-0.02,0.19,0.19,0.23,body,16);
+      cyl(0,-0.2,-0.15,0.14,0.14,0.02,metal,16);
+      for(let i=0;i<8;i++) {
+        const angle=i*Math.PI/4;
+        sphere(Math.sin(angle)*0.12,-0.2+Math.cos(angle)*0.12,-0.165,0.025,0.025,0.012,dark);
+      }
     }
     if(gun.id==="launcher") {
-      add(0,0.01,-0.2,0.23,0.19,0.58,body);
-      add(0,0.02,-0.52,0.25,0.22,0.12,trim);
+      cyl(0,0,-0.12,0.16,0.16,0.92,body,16);
+      cyl(0,0,-0.61,0.19,0.19,0.12,accent,16);
+      box(0,-0.19,0.1,0.2,0.22,0.22,rubber);
+      box(0,0.18,-0.08,0.22,0.06,0.28,dark);
     }
-    this.muzzle=add(0,0.015,-0.58,0.11,0.11,0.06,material(0xffdf92,0,0.2,0xffa52e));
+    if(gun.id==="experimental") {
+      box(0,0.01,-0.39,0.2,0.19,0.48,accent);
+      box(0,0.01,-0.4,0.12,0.12,0.4,glass);
+      for(let i=0;i<3;i++) box(0.115,0.01-i*0.045,-0.2,0.018,0.018,0.13,accent);
+    }
+    // Visible support hand and sleeve under the fore-end.
+    const sleeve=makeMat(0x35434a,0.08,0.9), glove=makeMat(0x171e22,0.08,0.88);
+    box(-0.13,-0.27,0.22,0.2,0.2,0.34,sleeve,0.12,0,0.08);
+    sphere(-0.045,-0.2,0.02,0.105,0.075,0.13,glove);
+    box(-0.045,-0.19,-0.02,0.13,0.075,0.18,glove);
+    this.muzzle=add(new THREE.ConeGeometry(0.075,0.13,8),makeMat(0xffd18a,0.05,0.2,0xff9c32),0,0.025,longGun?-0.86:-0.59,Math.PI,0,0);
     this.muzzle.visible=false;
-    this.muzzleLight=new THREE.PointLight(gun.upgraded?0x3be8ff:0xffa846,0,3);
-    this.muzzleLight.position.set(0,0.02,-0.65);
+    this.muzzleLight=new THREE.PointLight(gun.upgraded?0x3be8ff:0xffa846,0,2.2);
+    this.muzzleLight.position.set(0,0.025,longGun?-0.88:-0.6);
     this.model.add(this.muzzleLight);
     this.model.visible=true;
   }
-
   notify() { this.onAmmoChange?.(this.hud()); }
 
   hud() {
