@@ -50,9 +50,9 @@ export class FacilityWorld {
     this.machineRefs = {};
     this.textures=this.makeTextures();
     this.materials = {
-      wall: new THREE.MeshToonMaterial({color:0xc0b9a4,map:this.textures.concrete,gradientMap:toonRamp}),
+      wall: new THREE.MeshStandardMaterial({color:0xbab4a4,map:this.textures.concrete,roughness:0.94}),
       darkWall: this.mat(0x1b272e, 0.9, 0.1),
-      floor: new THREE.MeshToonMaterial({color:0x9d9a88,map:this.textures.floor,gradientMap:toonRamp}),
+      floor: new THREE.MeshStandardMaterial({color:0x8c8980,map:this.textures.floor,roughness:0.96}),
       trim: this.mat(0x758286, 0.75, 0.08),
       metal: this.mat(0x6f7c7d, 0.62, 0.3),
       black: this.mat(0x11191e, 0.45, 0.45),
@@ -60,11 +60,11 @@ export class FacilityWorld {
       amber: this.mat(0xffb34f, 0.4, 0.18, 0x71421c),
       red: this.mat(0xd94c48, 0.5, 0.15, 0x5b100e),
       glass: new THREE.MeshStandardMaterial({ color:0x6ac6d0, roughness:0.15, metalness:0.25, transparent:true, opacity:0.22 }),
-      wood: new THREE.MeshToonMaterial({color:0xc49a64,map:this.textures.wood,gradientMap:toonRamp}),
+      wood: new THREE.MeshStandardMaterial({color:0x9b7854,map:this.textures.wood,roughness:0.88}),
       chalk: this.mat(0xe4dfc9,0.95,0),
       paint: this.mat(0x68786a,0.9,0.02),
       rust: this.mat(0x704b36,0.95,0.05),
-      tile: new THREE.MeshToonMaterial({color:0xb0ad9b,map:this.textures.tile,gradientMap:toonRamp})
+      tile: new THREE.MeshStandardMaterial({color:0xaaa797,map:this.textures.tile,roughness:0.9})
     };
     this.build();
   }
@@ -170,11 +170,11 @@ export class FacilityWorld {
   }
 
   build() {
-    this.scene.background = new THREE.Color(0x0a1116);
-    this.scene.fog = new THREE.FogExp2(0x0b151b, 0.012);
-    const hemi = new THREE.HemisphereLight(0x9ecbd1, 0x151a1e, 1.05);
+    this.scene.background = new THREE.Color(0x101311);
+    this.scene.fog = new THREE.FogExp2(0x101311, 0.008);
+    const hemi = new THREE.HemisphereLight(0xc7c0ad, 0x24201a, 0.72);
     this.scene.add(hemi);
-    const key = new THREE.DirectionalLight(0xa8cbd0, 1.6);
+    const key = new THREE.DirectionalLight(0xd9c8a8, 1.05);
     key.position.set(-24, 34, 18);
     key.castShadow = false;
     key.shadow.mapSize.set(512,512);
@@ -182,7 +182,7 @@ export class FacilityWorld {
     key.shadow.camera.top = 30; key.shadow.camera.bottom = -75;
     key.shadow.bias = -0.00035;
     this.scene.add(key);
-    const fill = new THREE.PointLight(0xc69b62, 3.8, 42, 2);
+    const fill = new THREE.PointLight(0xd2a86d, 1.8, 34, 2);
     fill.position.set(0, 4, -22);
     this.scene.add(fill);
     this.buildExterior();
@@ -243,7 +243,8 @@ export class FacilityWorld {
     group.position.set(room.x,0,room.z);
     group.userData.roomId = room.id;
     this.scene.add(group);
-    this.box(group,0,-0.42,0,18,0.8,18,room.id==="medical"||room.id==="lab"?this.materials.tile:this.materials.floor);
+    const floorMat=room.id==="medical"||room.id==="lab"?this.materials.tile:this.materials.floor;
+    this.box(group,0,-0.42,0,18,0.8,18,floorMat);
     this.box(group,0,4.9,0,18,0.35,18,this.materials.darkWall,{castShadow:false});
     this.box(group,0,0.11,-8.56,17.8,0.16,0.08,this.materials.paint,{castShadow:false});
     this.box(group,0,0.11,8.56,17.8,0.16,0.08,this.materials.paint,{castShadow:false});
@@ -251,30 +252,45 @@ export class FacilityWorld {
     this.box(group,0,0.04,8.8,18,0.3,0.35,this.materials.trim);
     const windowSide=["south","east","west","north"].find(side=>!this.hasDoorAt(room,side));
     room.windowSide=windowSide;
-    this.buildWallEdge(group, room, "north", this.hasDoorAt(room,"north"),windowSide==="north");
-    this.buildWallEdge(group, room, "south", this.hasDoorAt(room,"south"),windowSide==="south");
-    this.buildWallEdge(group, room, "east", this.hasDoorAt(room,"east"),windowSide==="east");
-    this.buildWallEdge(group, room, "west", this.hasDoorAt(room,"west"),windowSide==="west");
-    for (let i=-7;i<=7;i+=2) {
-      this.box(group,i,4.7,-8.6,0.18,0.25,0.4,this.materials.metal,{castShadow:false});
-      this.box(group,i,4.7,8.6,0.18,0.25,0.4,this.materials.metal,{castShadow:false});
+    this.buildWallEdge(group,room,"north",this.hasDoorAt(room,"north"),windowSide==="north");
+    this.buildWallEdge(group,room,"south",this.hasDoorAt(room,"south"),windowSide==="south");
+    this.buildWallEdge(group,room,"east",this.hasDoorAt(room,"east"),windowSide==="east");
+    this.buildWallEdge(group,room,"west",this.hasDoorAt(room,"west"),windowSide==="west");
+
+    // Heavy concrete corner piers and overhead service beams give rooms real architectural structure.
+    for(const x of [-8.35,8.35]) for(const z of [-8.35,8.35]) {
+      this.box(group,x,2.45,z,0.62,4.9,0.62,this.materials.darkWall,{castShadow:false});
+      this.box(group,x,2.35,z,0.72,0.16,0.72,this.materials.metal,{castShadow:false});
+      this.box(group,x,4.45,z,0.7,0.12,0.7,this.materials.trim,{castShadow:false});
     }
-    const light=new THREE.PointLight(room.color,room.id==="start"?3.2:0.85,14,2);
-    light.position.set(0,3.6,0);group.add(light);
-    this.roomLights.push({light,roomId:room.id});
-    const lamp = this.box(group,0,4.45,0,2.5,0.12,0.7,this.mat(0xb7d0c5,0.3,0.05,room.color),{castShadow:false});
-    lamp.userData.emissiveLamp = true;
+    for(const z of [-6.2,6.2]) {
+      this.box(group,0,4.62,z,16.7,0.22,0.32,this.materials.darkWall,{castShadow:false});
+      this.box(group,0,4.48,z,16.7,0.08,0.36,this.materials.metal,{castShadow:false});
+    }
+    for(const x of [-6.2,6.2]) this.box(group,x,4.62,0,0.32,0.22,16.7,this.materials.darkWall,{castShadow:false});
+
+    const stripe=room.id==="power"||room.id==="pap"?this.materials.amber:this.materials.paint;
+    this.box(group,0,0.012,-7.7,12.5,0.025,0.11,stripe,{castShadow:false});
+    this.box(group,0,0.012,7.7,12.5,0.025,0.11,stripe,{castShadow:false});
+    for(const x of [-7.5,7.5]) this.box(group,x,0.014,0,0.11,0.028,12.5,stripe,{castShadow:false});
+
+    const lightColor=room.id==="medical"?0xd8dfcf:room.id==="power"?0xffc477:room.id==="pap"?0xb4c9c6:0xd5cbb2;
+    const light=new THREE.PointLight(lightColor,room.id==="start"?2.5:0.55,17,2);
+    light.position.set(0,3.7,0);group.add(light);this.roomLights.push({light,roomId:room.id});
+    this.box(group,0,4.68,0,3.8,0.18,1.25,this.materials.darkWall,{castShadow:false});
+    const diffuser=new THREE.MeshStandardMaterial({color:0xd8d5c4,emissive:0x9d9278,emissiveIntensity:0.22,roughness:0.55});
+    this.box(group,-0.82,4.79,0,1.18,0.035,0.78,diffuser,{castShadow:false});
+    this.box(group,0.82,4.79,0,1.18,0.035,0.78,diffuser,{castShadow:false});
+
     this.box(group,0,3.65,-8.55,5.8,0.92,0.22,this.materials.darkWall,{castShadow:false});
     const signTexture=this.makeRoomSignTexture(room.name);
-    const signMaterial=new THREE.MeshBasicMaterial({map:signTexture,transparent:false,toneMapped:false});
-    const signFace=new THREE.Mesh(new THREE.PlaneGeometry(5.45,0.78),signMaterial);
+    const signFace=new THREE.Mesh(new THREE.PlaneGeometry(5.45,0.78),new THREE.MeshBasicMaterial({map:signTexture,toneMapped:false}));
     signFace.position.set(0,3.65,-8.42);signFace.renderOrder=3;group.add(signFace);
-    if (room.id === "start") {
+    if(room.id==="start") {
       this.box(group,0,0.6,0,2.7,1.2,2.7,this.materials.darkWall);
       this.box(group,0,1.28,0,2.2,0.16,2.2,this.materials.trim);
     }
   }
-
   buildWallEdge(group, room, side, hasDoor, hasWindow=false) {
     const material=this.materials.wall;
     const half=9,height=5,thickness=0.7;
@@ -644,9 +660,11 @@ export class FacilityWorld {
         this.box(this.scene,room.x-7+i*2,0.012,room.z-7,0.035,0.02,0.035,this.materials.trim,{castShadow:false});
       }
     }
-    const grid=new THREE.GridHelper(220,55,0x333c36,0x242d29);
-    grid.position.set(0,-0.045,-21);
-    this.scene.add(grid);
+    // A marked service lane replaces the editor-like world grid.
+    const road=this.mat(0x343633,0.98,0.01);
+    this.box(this.scene,0,-0.79,-22,30,0.035,92,road,{castShadow:false});
+    const lane=this.mat(0x9a8157,0.9,0.01);
+    for(const x of [-12,12]) this.box(this.scene,x,-0.765,-22,0.12,0.025,84,lane,{castShadow:false});
   }
 
   reset() {
