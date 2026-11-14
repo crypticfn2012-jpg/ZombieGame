@@ -119,36 +119,107 @@ export class FacilityWorld {
 
   makeChalkTexture(item,weaponId) {
     if(typeof document==="undefined") return this.textures.concrete;
-    const canvas=document.createElement("canvas");canvas.width=512;canvas.height=256;
+    const canvas=document.createElement("canvas");
+    canvas.width=512;canvas.height=256;
     const ctx=canvas.getContext("2d");
     ctx.clearRect(0,0,512,256);
-    ctx.strokeStyle="rgba(226,222,205,.92)";ctx.fillStyle="rgba(226,222,205,.92)";
-    ctx.lineWidth=5;ctx.lineCap="square";ctx.lineJoin="miter";
-    ctx.font="bold 26px 'DM Mono',monospace";ctx.fillText(item.name.toUpperCase(),18,34);
-    const y=135;
-    ctx.beginPath();
-    const long=["shotgun","autoShotgun","sniper","launcher","tactical"].includes(weaponId);
-    const stock=weaponId==="launcher"?52:long?72:85;
-    ctx.moveTo(70,y-12);ctx.lineTo(150,y-12);ctx.lineTo(178,y-23);ctx.lineTo(340,y-23);
-    ctx.lineTo(425,y-15);ctx.lineTo(475,y-15);ctx.moveTo(340,y-23);ctx.lineTo(480,y-23);
-    ctx.moveTo(70,y-12);ctx.lineTo(40,y-25);ctx.lineTo(40,y+5);ctx.lineTo(150,y+5);
-    ctx.moveTo(178,y-23);ctx.lineTo(178,y+22);ctx.lineTo(290,y+22);ctx.lineTo(290,y-23);
-    ctx.moveTo(212,y+22);ctx.lineTo(205,y+75);ctx.lineTo(247,y+75);ctx.lineTo(253,y+22);
-    ctx.moveTo(280,y+22);ctx.lineTo(300,y+63);ctx.lineTo(328,y+63);ctx.lineTo(318,y+22);
-    if(["sniper","tactical","rifle","burst","experimental"].includes(weaponId)){
-      ctx.moveTo(220,y-23);ctx.lineTo(220,y-52);ctx.lineTo(300,y-52);ctx.lineTo(300,y-23);
-      ctx.moveTo(260,y-52);ctx.lineTo(260,y-68);
+    ctx.strokeStyle="rgba(226,222,205,.94)";
+    ctx.fillStyle="rgba(226,222,205,.94)";
+    ctx.lineWidth=4.2;ctx.lineCap="round";ctx.lineJoin="round";
+    ctx.setLineDash([]);
+    ctx.font="bold 24px 'DM Mono',monospace";
+    ctx.fillText(item.name.toUpperCase(),18,32,470);
+    const line=(points,close=false)=>{
+      ctx.beginPath();
+      points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
+      if(close)ctx.closePath();
+      ctx.stroke();
+    };
+    const rect=(x,y,w,h)=>ctx.strokeRect(x,y,w,h);
+    const circle=(x,y,r)=>{ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();};
+    const gun=weaponId;
+    // Each purchase has its own recognisable profile, drawn as imperfect chalk rather than a shared icon.
+    if(gun==="pistol") {
+      line([[66,105],[118,105],[145,94],[270,94],[292,103],[333,103],[333,119],[284,119],[270,128],[164,128],[145,118],[111,118],[111,150],[88,158],[72,149],[78,120],[66,120]]);
+      line([[164,128],[169,174],[207,174],[213,128]]);
+      line([[184,94],[184,84],[244,84],[244,94]]);
+      line([[289,103],[350,103],[350,117],[289,117]]);
+      line([[114,119],[114,137],[99,142]]);
+    } else if(gun==="revolver") {
+      line([[48,108],[142,108],[166,96],[285,96],[319,106],[378,106],[378,119],[316,119],[285,128],[169,128],[142,118],[101,118],[104,158],[83,166],[61,154],[70,119]]);
+      circle(210,112,24);circle(210,112,15);
+      for(let i=0;i<6;i++){const t=i*Math.PI/3;circle(210+Math.cos(t)*16,112+Math.sin(t)*16,3.5);}
+      line([[183,91],[183,80],[253,80],[253,91]]);
+      line([[288,105],[389,105]]);
+    } else if(gun==="rifle"||gun==="burst"||gun==="tactical"||gun==="experimental") {
+      line([[35,113],[100,113],[126,98],[310,98],[337,105],[415,105],[468,111],[468,121],[414,121],[337,117],[310,128],[134,128],[100,120],[35,120],[35,113]]);
+      line([[76,114],[60,91],[91,91],[111,113]]);
+      line([[128,128],[137,178],[177,178],[184,128]]);
+      line([[231,128],[238,163],[270,163],[279,128]]);
+      line([[185,98],[185,81],[285,81],[285,98]]);
+      line([[204,81],[204,69],[265,69],[265,81]]);
+      line([[313,98],[313,88],[340,88],[340,98]]);
+      line([[418,105],[418,94],[468,94]]);
+      if(gun==="burst") {line([[218,69],[235,61],[252,69]]);line([[292,102],[292,124]]);}
+      if(gun==="tactical") {line([[157,128],[164,174],[190,174],[194,128]]);line([[290,98],[290,87],[321,87]]);}
+      if(gun==="experimental") {rect(235,92,62,39);line([[246,102],[286,121]]);line([[286,102],[246,121]]);}
+    } else if(gun==="smg"||gun==="heavySmg") {
+      line([[58,110],[116,110],[139,99],[296,99],[320,108],[410,108],[410,120],[319,120],[296,130],[141,130],[116,121],[58,121],[58,110]]);
+      line([[78,110],[70,91],[102,91],[118,110]]);
+      line([[150,130],[157,174],[194,174],[200,130]]);
+      line([[219,99],[219,83],[273,83],[273,99]]);
+      if(gun==="heavySmg") {
+        circle(248,148,33);circle(248,148,25);line([[215,148],[281,148]]);
+      } else {
+        line([[234,130],[241,161],[273,161],[279,130]]);
+      }
+      line([[300,99],[300,89],[329,89]]);
+    } else if(gun==="shotgun"||gun==="autoShotgun") {
+      line([[38,111],[120,111],[147,99],[340,99],[369,106],[463,106],[463,121],[368,121],[340,130],[149,130],[120,120],[38,120],[38,111]]);
+      line([[61,111],[52,91],[98,91],[118,111]]);
+      line([[157,130],[164,175],[207,175],[214,130]]);
+      line([[231,130],[239,159],[273,159],[281,130]]);
+      line([[172,139],[172,153],[309,153],[309,139]]);
+      if(gun==="autoShotgun") {rect(188,84,72,13);line([[201,84],[201,72],[246,72],[246,84]]);}
+      else {line([[180,99],[180,87],[321,87],[321,99]]);}
+      line([[346,99],[346,88],[369,88]]);
+    } else if(gun==="sniper") {
+      line([[25,115],[107,115],[139,101],[342,101],[365,108],[480,108],[480,119],[365,119],[342,130],[142,130],[107,121],[25,121],[25,115]]);
+      line([[52,115],[39,92],[92,92],[112,115]]);
+      line([[147,130],[155,176],[194,176],[202,130]]);
+      line([[221,130],[231,158],[261,158],[270,130]]);
+      rect(188,75,116,18);rect(202,67,87,8);
+      line([[245,67],[245,58],[258,58]]);
+      line([[303,84],[328,84],[328,101]]);
+      line([[426,108],[480,108]]);
+    } else if(gun==="launcher") {
+      line([[35,103],[100,103],[120,92],[414,92],[445,101],[475,101],[475,137],[445,137],[414,146],[120,146],[100,135],[35,135],[35,103]]);
+      line([[60,103],[54,85],[103,85],[122,103]]);
+      line([[144,146],[151,183],[190,183],[197,146]]);
+      line([[252,146],[261,176],[292,176],[300,146]]);
+      rect(174,82,195,74);
+      line([[197,82],[197,68],[345,68],[345,82]]);
+      line([[414,92],[414,146]]);
+      line([[445,101],[445,137]]);
+    } else {
+      // Fallback for future weapon additions: a simple rifle profile, not a blank generic board.
+      line([[40,112],[125,112],[150,99],[340,99],[390,108],[468,108],[468,122],[390,122],[340,131],[150,131],[125,121],[40,121],[40,112]]);
+      line([[160,131],[168,174],[204,174],[211,131]]);
+      line([[230,99],[230,81],[290,81],[290,99]]);
     }
-    if(weaponId==="shotgun"||weaponId==="autoShotgun"){
-      ctx.moveTo(175,y+30);ctx.lineTo(290,y+30);ctx.lineTo(290,y+48);ctx.lineTo(175,y+48);
+    ctx.font="bold 27px 'DM Mono',monospace";
+    ctx.fillText(item.price.toLocaleString("en-GB")+" CR",365,231);
+    ctx.font="13px 'DM Mono',monospace";
+    ctx.fillText("WALL PURCHASE",18,231);
+    ctx.font="11px 'DM Mono',monospace";
+    ctx.fillText("NORTHSTAR ARMOURY",18,249);
+    // A few broken strokes and dust flecks make the outlines read as hand-marked chalk.
+    ctx.globalAlpha=0.42;ctx.lineWidth=1.4;
+    for(let i=0;i<24;i++){
+      const x=18+(i*83)%475,y=45+(i*47)%168;
+      ctx.fillRect(x,y,1.5,1.5);
     }
-    if(weaponId==="revolver"){ctx.moveTo(180,y-20);ctx.lineTo(220,y-45);ctx.lineTo(270,y-45);ctx.lineTo(290,y-20);}
-    if(weaponId==="launcher"){ctx.moveTo(160,y-38);ctx.lineTo(390,y-38);ctx.lineTo(390,y+10);ctx.lineTo(160,y+10);ctx.closePath();}
-    ctx.stroke();
-    ctx.font="bold 28px 'DM Mono',monospace";ctx.fillText(item.price.toLocaleString("en-GB")+" CR",365,235);
-    ctx.font="14px 'DM Mono',monospace";ctx.fillText("WALL PURCHASE",18,235);
-    // Chalk dust and imperfect marks keep the preview from looking like a clean UI icon.
-    for(let i=0;i<48;i++){const x=(i*73)%500,yDust=(i*47)%210;ctx.fillRect(x,yDust,2,2);}
+    ctx.globalAlpha=1;
     return new THREE.CanvasTexture(canvas);
   }
 
