@@ -103,6 +103,54 @@ export class FacilityWorld {
     };
   }
 
+  makeRoomSignTexture(title) {
+    if(typeof document==="undefined") return this.textures.concrete;
+    const canvas=document.createElement("canvas");canvas.width=512;canvas.height=96;
+    const ctx=canvas.getContext("2d");
+    ctx.fillStyle="#171d18";ctx.fillRect(0,0,512,96);
+    ctx.fillStyle="#b58e51";ctx.fillRect(0,0,7,96);
+    ctx.fillStyle="#d8d1bb";ctx.font="bold 38px 'Barlow Condensed',Arial,sans-serif";
+    ctx.textBaseline="middle";ctx.fillText(title,24,42,460);
+    ctx.fillStyle="#b18c55";ctx.font="14px monospace";ctx.fillText("NORTHSTAR   /   SUBLEVEL 07",25,78);
+    ctx.fillStyle="#b15f46";ctx.fillRect(476,15,18,18);
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  makeChalkTexture(item,weaponId) {
+    if(typeof document==="undefined") return this.textures.concrete;
+    const canvas=document.createElement("canvas");canvas.width=512;canvas.height=256;
+    const ctx=canvas.getContext("2d");
+    ctx.clearRect(0,0,512,256);
+    ctx.strokeStyle="rgba(226,222,205,.92)";ctx.fillStyle="rgba(226,222,205,.92)";
+    ctx.lineWidth=5;ctx.lineCap="square";ctx.lineJoin="miter";
+    ctx.font="bold 26px 'DM Mono',monospace";ctx.fillText(item.name.toUpperCase(),18,34);
+    const y=135;
+    ctx.beginPath();
+    const long=["shotgun","autoShotgun","sniper","launcher","tactical"].includes(weaponId);
+    const stock=weaponId==="launcher"?52:long?72:85;
+    ctx.moveTo(70,y-12);ctx.lineTo(150,y-12);ctx.lineTo(178,y-23);ctx.lineTo(340,y-23);
+    ctx.lineTo(425,y-15);ctx.lineTo(475,y-15);ctx.moveTo(340,y-23);ctx.lineTo(480,y-23);
+    ctx.moveTo(70,y-12);ctx.lineTo(40,y-25);ctx.lineTo(40,y+5);ctx.lineTo(150,y+5);
+    ctx.moveTo(178,y-23);ctx.lineTo(178,y+22);ctx.lineTo(290,y+22);ctx.lineTo(290,y-23);
+    ctx.moveTo(212,y+22);ctx.lineTo(205,y+75);ctx.lineTo(247,y+75);ctx.lineTo(253,y+22);
+    ctx.moveTo(280,y+22);ctx.lineTo(300,y+63);ctx.lineTo(328,y+63);ctx.lineTo(318,y+22);
+    if(["sniper","tactical","rifle","burst","experimental"].includes(weaponId)){
+      ctx.moveTo(220,y-23);ctx.lineTo(220,y-52);ctx.lineTo(300,y-52);ctx.lineTo(300,y-23);
+      ctx.moveTo(260,y-52);ctx.lineTo(260,y-68);
+    }
+    if(weaponId==="shotgun"||weaponId==="autoShotgun"){
+      ctx.moveTo(175,y+30);ctx.lineTo(290,y+30);ctx.lineTo(290,y+48);ctx.lineTo(175,y+48);
+    }
+    if(weaponId==="revolver"){ctx.moveTo(180,y-20);ctx.lineTo(220,y-45);ctx.lineTo(270,y-45);ctx.lineTo(290,y-20);}
+    if(weaponId==="launcher"){ctx.moveTo(160,y-38);ctx.lineTo(390,y-38);ctx.lineTo(390,y+10);ctx.lineTo(160,y+10);ctx.closePath();}
+    ctx.stroke();
+    ctx.font="bold 28px 'DM Mono',monospace";ctx.fillText(item.price.toLocaleString("en-GB")+" CR",365,235);
+    ctx.font="14px 'DM Mono',monospace";ctx.fillText("WALL PURCHASE",18,235);
+    // Chalk dust and imperfect marks keep the preview from looking like a clean UI icon.
+    for(let i=0;i<48;i++){const x=(i*73)%500,yDust=(i*47)%210;ctx.fillRect(x,yDust,2,2);}
+    return new THREE.CanvasTexture(canvas);
+  }
+
   mat(color, roughness=0.8, metalness=0.1, emissive=0x000000) {
     return new THREE.MeshToonMaterial({ color, gradientMap:toonRamp, emissive, emissiveIntensity: emissive ? 0.3 : 0 });
   }
@@ -216,11 +264,10 @@ export class FacilityWorld {
     const lamp = this.box(group,0,4.45,0,2.5,0.12,0.7,this.mat(0xb7d0c5,0.3,0.05,room.color),{castShadow:false});
     lamp.userData.emissiveLamp = true;
     this.box(group,0,3.65,-8.55,5.8,0.92,0.22,this.materials.darkWall,{castShadow:false});
-    this.box(group,0,4.12,-8.41,5.55,0.06,0.05,this.materials.amber,{castShadow:false});
-    this.box(group,-2.25,3.65,-8.4,0.12,0.55,0.06,this.materials.amber,{castShadow:false});
-    this.box(group,2.25,3.65,-8.4,0.12,0.55,0.06,this.materials.amber,{castShadow:false});
-    this.box(group,0,3.18,-8.41,5.55,0.06,0.05,this.materials.amber,{castShadow:false});
-    for(let i=0;i<5;i++)this.box(group,-1.5+i*0.75,3.62,-8.38,0.35,0.08,0.04,this.mat(room.color),{castShadow:false});
+    const signTexture=this.makeRoomSignTexture(room.name);
+    const signMaterial=new THREE.MeshBasicMaterial({map:signTexture,transparent:false,toneMapped:false});
+    const signFace=new THREE.Mesh(new THREE.PlaneGeometry(5.45,0.78),signMaterial);
+    signFace.position.set(0,3.65,-8.42);signFace.renderOrder=3;group.add(signFace);
     if (room.id === "start") {
       this.box(group,0,0.6,0,2.7,1.2,2.7,this.materials.darkWall);
       this.box(group,0,1.28,0,2.2,0.16,2.2,this.materials.trim);
@@ -524,35 +571,12 @@ export class FacilityWorld {
   }
 
   addWallBuySilhouette(item,weaponId,color) {
-    const chalk=this.materials.chalk;
-    const board=this.materials.darkWall;
-    const frame=this.materials.wood;
-    // A plywood wall plaque with a hand-drawn, blocky chalk weapon profile.
-    this.box(item.mesh,0,1.72,0,2.8,2.25,0.22,frame,{castShadow:false});
-    this.box(item.mesh,0,1.72,0.14,2.55,2.02,0.06,board,{castShadow:false});
-    const long=["shotgun","autoShotgun","sniper","launcher","tactical"].includes(weaponId);
-    const width=weaponId==="launcher"?1.15:long?1.35:0.98;
-    const z=0.2;
-    const line=(x,y,w,h)=>this.box(item.mesh,x,y,z,w,h,0.045,chalk,{castShadow:false});
-    // Chalk profile is deliberately geometric, like a hand-drawn wall-buy icon.
-    line(-0.05,1.95,width,0.11);line(0.52,2.04,0.62,0.065);line(-0.62,1.95,0.22,0.16);
-    line(-0.18,1.73,0.14,0.38);line(0.08,1.73,0.16,0.34);
-    line(0.08,2.17,0.38,0.07);line(0.1,2.25,0.12,0.1);
-    line(-0.68,2.1,0.16,0.07);
-    if(weaponId==="sniper"||weaponId==="tactical"){line(-0.02,2.28,0.38,0.08);line(-0.02,2.38,0.12,0.12);}
-    if(weaponId==="shotgun"||weaponId==="autoShotgun"){line(-0.12,1.56,0.12,0.15);line(0.02,1.55,0.12,0.13);}
-    if(weaponId==="launcher"){line(0.02,1.96,0.82,0.28);line(0.62,1.96,0.12,0.34);}
-    // Small chalk price ticks and a colour-coded weapon family strip.
-    const digits=item.price.toString();
-    const segments={a:[0,0.09,0.19,0.045],b:[0.095,0.045,0.045,0.16],c:[0.095,-0.14,0.045,0.16],d:[0,-0.235,0.19,0.045],e:[-0.095,-0.14,0.045,0.16],f:[-0.095,0.045,0.045,0.16],g:[0,-0.075,0.19,0.045]};
-    const active={0:"abcdef",1:"bc",2:"abged",3:"abgcd",4:"fgbc",5:"afgcd",6:"afgecd",7:"abc",8:"abcdefg",9:"abfgcd"};
-    const startX=-(digits.length-1)*0.28;
-    [...digits].forEach((digit,index)=>{
-      for(const key of active[digit]||"abcdefg"){
-        const [dx,dy,sx,sy]=segments[key];
-        this.box(item.mesh,startX+index*0.56+dx,0.78+dy,0.2,sx,sy,0.04,chalk,{castShadow:false});
-      }
-    });
+    this.box(item.mesh,0,1.72,0,2.8,2.25,0.22,this.materials.wood,{castShadow:false});
+    this.box(item.mesh,0,1.72,0.14,2.55,2.02,0.06,this.materials.darkWall,{castShadow:false});
+    const chalkTexture=this.makeChalkTexture(item,weaponId);
+    const chalkMaterial=new THREE.MeshBasicMaterial({map:chalkTexture,transparent:true,depthWrite:false,toneMapped:false});
+    const preview=new THREE.Mesh(new THREE.PlaneGeometry(2.35,1.16),chalkMaterial);
+    preview.position.set(0,1.77,0.205);preview.renderOrder=4;item.mesh.add(preview);
     this.box(item.mesh,0,0.48,0.2,2.15,0.055,0.04,this.mat(color),{castShadow:false});
   }
   buildMachines() {
