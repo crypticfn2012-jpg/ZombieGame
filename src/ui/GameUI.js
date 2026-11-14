@@ -85,7 +85,7 @@ export class GameUI {
 
   showGame() {
     this.showScreen("game");
-    this.notify("FACILITY ENTRY CONFIRMED","Eliminate infected hostiles. Earn credits. Find the power relay.",true);
+    this.notify("RADIO CHECK / CHANNEL 07","Northstar control is not responding. Follow the field orders.",true);
   }
 
   showPause() {
