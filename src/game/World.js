@@ -28,6 +28,13 @@ const DOOR_DATA = [
 const toonRamp = new THREE.DataTexture(new Uint8Array([48,48,48,255,126,126,126,255,226,226,226,255]),3,1,THREE.RGBAFormat);
 toonRamp.minFilter=THREE.NearestFilter; toonRamp.magFilter=THREE.NearestFilter; toonRamp.generateMipmaps=false; toonRamp.needsUpdate=true;
 
+const surfacePixels=new Uint8Array(16*4);
+for(let i=0;i<16;i++){const shade=(i%4===0||Math.floor(i/4)%2===0)?218:244;surfacePixels.set([shade,shade,shade,255],i*4);}
+const surfaceTexture=new THREE.DataTexture(surfacePixels,4,4,THREE.RGBAFormat);
+surfaceTexture.wrapS=THREE.RepeatWrapping;surfaceTexture.wrapT=THREE.RepeatWrapping;
+surfaceTexture.magFilter=THREE.NearestFilter;surfaceTexture.minFilter=THREE.NearestFilter;
+surfaceTexture.repeat.set(5,5);surfaceTexture.colorSpace=THREE.SRGBColorSpace;surfaceTexture.needsUpdate=true;
+
 export class FacilityWorld {
   constructor(scene) {
     this.scene = scene;
@@ -54,7 +61,7 @@ export class FacilityWorld {
   }
 
   mat(color, roughness=0.8, metalness=0.1, emissive=0x000000) {
-    return new THREE.MeshToonMaterial({ color, gradientMap:toonRamp, emissive, emissiveIntensity: emissive ? 0.45 : 0 });
+    return new THREE.MeshToonMaterial({ color, map:surfaceTexture, gradientMap:toonRamp, emissive, emissiveIntensity: emissive ? 0.45 : 0 });
   }
 
   box(parent, x, y, z, sx, sy, sz, material, extra={}) {
@@ -258,7 +265,7 @@ export class FacilityWorld {
 
   addProp(roomId, x,z, sx,sy,sz,color, options={}) {
     const room=this.rooms.get(roomId);
-    const material=typeof color==="number" ? new THREE.MeshToonMaterial({color,gradientMap:toonRamp}) : color;
+    const material=typeof color==="number" ? new THREE.MeshToonMaterial({color,map:surfaceTexture,gradientMap:toonRamp}) : color;
     const mesh=this.box(this.scene,room.x+x,sy/2,room.z+z,sx,sy,sz,material);
     if(options.collider!==false) this.addCollider(room.x+x,room.z+z,sx+0.25,sz+0.25);
     return mesh;
