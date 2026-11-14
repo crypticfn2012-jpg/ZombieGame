@@ -117,6 +117,7 @@ export class ProgressionSystem {
     }
     this.powerOn=true;
     this.world.powerOn=true;
+    this.world.restorePower?.();
     item.active=true;
     const machine=this.world.machineRefs;
     for(const [id,obj] of Object.entries(machine)) {
