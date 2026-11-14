@@ -123,6 +123,35 @@ export class WeaponSystem {
     add(0,0.08,-0.13,0.13,0.055,0.25,trim);
     add(0.0,0.09,-0.22,0.075,0.075,0.13,gun.upgraded?trim:dark);
     add(0.09,-0.03,0.08,0.035,0.11,0.18,trim);
+    const longGun=["rifle","burst","tactical","sniper","smg","heavySmg","shotgun","autoShotgun","launcher"].includes(gun.id);
+    if(longGun) {
+      add(0,-0.13,-0.02,0.12,0.24,0.18,dark);
+      add(0,-0.27,-0.04,0.13,0.25,0.18,body);
+      add(0,0.12,-0.05,0.2,0.045,0.38,dark);
+      for(let i=0;i<4;i++) add(-0.07+i*0.045,0.15,-0.19,0.018,0.025,0.11,trim);
+      add(0,0.07,-0.54,0.12,0.075,0.1,dark);
+      add(0,-0.015,0.26,0.2,0.1,0.16,dark);
+      if(gun.id==="sniper"||gun.id==="tactical") {
+        add(0,0.23,-0.1,0.12,0.13,0.34,dark);
+        add(0,0.3,-0.1,0.24,0.08,0.15,trim);
+        add(0,-0.02,0.37,0.16,0.11,0.3,body);
+      }
+      if(gun.id==="shotgun"||gun.id==="autoShotgun") {
+        add(0,-0.11,0.39,0.17,0.13,0.28,trim);
+        add(0,-0.04,0.43,0.13,0.06,0.28,dark);
+      }
+      if(gun.id==="launcher") {
+        add(0,0.02,-0.25,0.28,0.24,0.6,body);
+        add(0,0.02,-0.58,0.32,0.28,0.12,trim);
+      }
+    } else {
+      add(0,0.075,-0.2,0.18,0.045,0.32,trim);
+      add(0,-0.18,0.13,0.12,0.12,0.12,body);
+      add(0,0.06,-0.34,0.1,0.05,0.16,dark);
+    }
+    const sleeve=material(0x303b40,0.1,0.8), glove=material(0x171d21,0.2,0.8);
+    add(-0.11,-0.27,0.22,0.19,0.18,0.34,sleeve);
+    add(-0.04,-0.17,0.02,0.16,0.12,0.18,glove);
     if(gun.id==="sniper") {
       add(0,0.16,-0.02,0.08,0.11,0.25,dark);
       add(0,0.22,-0.03,0.22,0.08,0.13,trim);
@@ -320,6 +349,9 @@ export class WeaponSystem {
     if(!this.model) return;
     const dt=0.016;
     this.meleeTimer=Math.max(0,this.meleeTimer-dt);
+    const reloadTilt=this.reloading?0.58:0;
+    this.model.rotation.z=THREE.MathUtils.damp(this.model.rotation.z,reloadTilt,9,dt);
+    this.model.position.y=THREE.MathUtils.damp(this.model.position.y,(this.aiming?-0.27:-0.31)+(this.reloading?-0.12:0),10,dt);
     if(this.knifeModel.visible) {
       const swing=this.meleeTimer>0?1-this.meleeTimer/0.48:0;
       this.knifeModel.rotation.y=THREE.MathUtils.damp(this.knifeModel.rotation.y,swing>0?Math.sin(swing*Math.PI)*-1.1:0,18,dt);
