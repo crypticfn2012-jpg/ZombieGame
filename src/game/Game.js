@@ -214,7 +214,9 @@ export class BlacksiteGame {
     if(this.zombies.count()>=this.zombies.maxAlive)return false;
     const open=this.world.openRoomIds();
     const playerPos=this.camera.position;
-    const windows=this.world.spawnWindows(open).filter(win=>Math.hypot(win.outside.x-playerPos.x,win.outside.z-playerPos.z)>9);
+    const available=this.world.spawnWindows(open);
+    const distant=available.filter(win=>Math.hypot(win.outside.x-playerPos.x,win.outside.z-playerPos.z)>9);
+    const windows=distant.length?distant:available;
     if(!windows.length)return false;
     const win=windows[Math.floor(Math.random()*windows.length)];
     const type=this.zombies.chooseType(this.round);
