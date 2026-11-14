@@ -11,6 +11,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./src/style.css">
   <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+  <!-- Fallback import map for source-mode hosting (for example, Pages configured to serve the repository root). Vite production builds bundle Three.js and do not depend on this CDN mapping. -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
   <main id="game-root">
