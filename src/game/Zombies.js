@@ -8,6 +8,7 @@ const TYPES = {
   runner:{name:"RUSHER",health:62,speed:3.05,damage:7,scale:0.92,color:0x9e745d,points:130},
   armored:{name:"ARMOURED",health:245,speed:1.25,damage:16,scale:1.18,color:0x65717c,points:180},
   explosive:{name:"VOLATILE",health:90,speed:2.2,damage:22,scale:1,color:0xb67b43,points:160},
+  irradiated:{name:"IRRADIATED",health:175,speed:1.95,damage:13,scale:1.08,color:0x8aa64d,points:220,radiation:true},
   elite:{name:"ELITE",health:390,speed:2.3,damage:18,scale:1.12,color:0x7c4f70,points:260},
   brute:{name:"THE BRUTE",health:2600,speed:1.45,damage:28,scale:1.85,color:0x71605c,points:1800,boss:true},
   experiment:{name:"THE EXPERIMENT",health:3400,speed:1.9,damage:20,scale:1.55,color:0x4d918b,points:2500,boss:true,ranged:true},
@@ -36,7 +37,7 @@ export class ZombieDirector {
     const mat=color=>new THREE.MeshToonMaterial({color,gradientMap:toonRamp});
     const skin=mat(data.color), cloth=mat(type==="armored"?0x35434a:type==="runner"?0x57453b:0x465149);
     const dark=mat(0x202b2b), pants=mat(0x303b3d), accent=mat(type==="explosive"?0xe58b43:data.boss?0x8c667f:0x758d83);
-    const eye=mat(0xe95d4f), bone=mat(0xc9c2a9), armour=mat(0x59666b);
+    const eye=mat(type==="irradiated"?0xc8f06a:0xe95d4f), bone=mat(0xc9c2a9), armour=mat(0x59666b);
     const box=(parent,x,y,z,sx,sy,sz,material)=>{
       const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);
       mesh.position.set(x,y,z);mesh.castShadow=false;mesh.receiveShadow=false;parent.add(mesh);return mesh;
@@ -79,6 +80,12 @@ export class ZombieDirector {
       box(torso,-0.39,0.2,0,0.24,0.26,0.34,armour);
       box(torso,0.39,0.2,0,0.24,0.26,0.34,armour);
       box(head,0,0.43,0,0.55,0.12,0.48,accent);
+    }
+    if(type==="irradiated") {
+      box(torso,0,-0.02,0.23,0.3,0.3,0.13,accent);
+      box(torso,-0.31,0.2,0.03,0.13,0.24,0.3,accent);
+      box(torso,0.31,0.2,0.03,0.13,0.24,0.3,accent);
+      box(head,0,0.02,0.25,0.18,0.08,0.04,eye);
     }
     if(type==="explosive") {
       box(torso,0,-0.02,0.22,0.26,0.26,0.12,accent);
@@ -190,7 +197,9 @@ export class ZombieDirector {
     if(round>=2) pool.push("runner");
     if(round>=3) pool.push("armored");
     if(round>=4) pool.push("explosive");
+    if(round>=5) pool.push("irradiated");
     if(round>=6) pool.push("elite","runner");
+    if(round>=9) pool.push("irradiated","irradiated");
     if(round>=9) pool.push("armored","elite");
     return pool[Math.floor(Math.random()*pool.length)];
   }
@@ -316,6 +325,10 @@ export class ZombieDirector {
         this.spawnShockwave(zpos);
         zombie.specialTimer=6.2;
         this.audio?.play("boss");
+      }
+      if(zombie.data.radiation&&realDist<3.1&&zombie.specialTimer<=0) {
+        this.onPlayerDamage?.(7,zombie);
+        zombie.specialTimer=2.25;
       }
       const meleeRange=zombie.data.boss?1.8:1.45;
       if((!ranged || zombie.type==="brute") && realDist<meleeRange && zombie.attackTimer<=0) {
