@@ -119,3 +119,54 @@ test("zombies spawned at a window begin outside and enter through the authored w
   assert.equal(zombie.group.position.z,win.outside.z);
   assert.equal(zombie.entryWindow,win);
 });
+
+
+test("facility art kit builds textured walls, timber doors, chalk wall buys and separated perk rooms",()=>{
+  const scene=new THREE.Scene();
+  const world=new FacilityWorld(scene);
+  assert.ok(world.materials.wall.map);
+  assert.ok(world.materials.floor.map);
+  assert.ok(world.materials.wood.map);
+  assert.equal(world.doors.length,10);
+  assert.ok(world.doors.every(door=>door.mesh.children.length>12));
+  const wallBuys=world.interactables.filter(item=>item.type==="wallbuy");
+  assert.equal(wallBuys.length,10);
+  assert.ok(wallBuys.every(item=>item.mesh.children.length>15));
+  const perkRooms=new Set(world.interactables.filter(item=>item.type==="perk").map(item=>item.roomId));
+  assert.equal(perkRooms.size,7);
+});
+
+test("irradiated zones are present and irradiated infected have radiation traits",()=>{
+  const scene=new THREE.Scene();
+  const world=new FacilityWorld(scene);
+  assert.equal(world.radiationZones.length,3);
+  const zone=world.radiationZones[0];
+  assert.equal(world.isInRadiation({x:zone.x,z:zone.z}),true);
+  assert.equal(world.isInRadiation({x:500,z:500}),false);
+  const director=new ZombieDirector(scene,quietAudio,()=>{},()=>{},()=>{},()=>{});
+  const infected=director.makeZombie("irradiated");
+  assert.equal(infected.data.radiation,true);
+  assert.equal(infected.data.name,"IRRADIATED");
+});
+
+test("Operation Lantern advances through its six mission requirements",()=>{
+  const progression=makeProgression();
+  progression.roundsSurvived=3;
+  progression.updateMission();
+  assert.equal(progression.missionStage,1);
+  progression.powerOn=true;
+  progression.updateMission();
+  assert.equal(progression.missionStage,2);
+  progression.documentsCollected=new Set(["document-a","document-b","document-c"]);
+  progression.updateMission();
+  assert.equal(progression.missionStage,3);
+  progression.terminalRead=true;
+  progression.updateMission();
+  assert.equal(progression.missionStage,4);
+  progression.packUsed=true;
+  progression.updateMission();
+  assert.equal(progression.missionStage,5);
+  progression.finalBossKilled=true;
+  progression.updateMission();
+  assert.equal(progression.missionStage,6);
+});
