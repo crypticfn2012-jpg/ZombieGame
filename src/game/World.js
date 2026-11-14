@@ -25,6 +25,9 @@ const DOOR_DATA = [
   { id:"pap-arena", a:"pap", b:"arena", cost:1850, axis:"x" }
 ];
 
+const toonRamp = new THREE.DataTexture(new Uint8Array([48,48,48,255,126,126,126,255,226,226,226,255]),3,1,THREE.RGBAFormat);
+toonRamp.minFilter=THREE.NearestFilter; toonRamp.magFilter=THREE.NearestFilter; toonRamp.generateMipmaps=false; toonRamp.needsUpdate=true;
+
 export class FacilityWorld {
   constructor(scene) {
     this.scene = scene;
@@ -51,7 +54,7 @@ export class FacilityWorld {
   }
 
   mat(color, roughness=0.8, metalness=0.1, emissive=0x000000) {
-    return new THREE.MeshToonMaterial({ color, emissive, emissiveIntensity: emissive ? 0.45 : 0 });
+    return new THREE.MeshToonMaterial({ color, gradientMap:toonRamp, emissive, emissiveIntensity: emissive ? 0.45 : 0 });
   }
 
   box(parent, x, y, z, sx, sy, sz, material, extra={}) {
@@ -255,7 +258,7 @@ export class FacilityWorld {
 
   addProp(roomId, x,z, sx,sy,sz,color, options={}) {
     const room=this.rooms.get(roomId);
-    const material=typeof color==="number" ? new THREE.MeshToonMaterial({color}) : color;
+    const material=typeof color==="number" ? new THREE.MeshToonMaterial({color,gradientMap:toonRamp}) : color;
     const mesh=this.box(this.scene,room.x+x,sy/2,room.z+z,sx,sy,sz,material);
     if(options.collider!==false) this.addCollider(room.x+x,room.z+z,sx+0.25,sz+0.25);
     return mesh;
@@ -294,8 +297,8 @@ export class FacilityWorld {
     const group=new THREE.Group();
     group.position.set(room.x+x,0,room.z+z);
     this.scene.add(group);
-    const base=new THREE.MeshToonMaterial({color:0x17252b});
-    const shell=new THREE.MeshToonMaterial({color,emissive:color,emissiveIntensity:0.12});
+    const base=new THREE.MeshToonMaterial({color:0x17252b,gradientMap:toonRamp});
+    const shell=new THREE.MeshToonMaterial({color,gradientMap:toonRamp,emissive:color,emissiveIntensity:0.12});
     this.box(group,0,0.8,0,1.35,1.6,1.0,base);
     this.box(group,0,1.72,0,1.15,0.3,0.9,shell);
     this.box(group,0,1.1,0.51,0.72,0.64,0.08,shell);
