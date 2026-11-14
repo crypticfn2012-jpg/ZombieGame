@@ -111,23 +111,33 @@ export class GameUI {
   }
 
   setPoints(points) {
-    document.getElementById("hud-points").textContent=Math.floor(points).toLocaleString("en-GB");
+    const node=document.getElementById("hud-points"); const value=Math.floor(points).toLocaleString("en-GB"); if(node.textContent!==value) node.textContent=value;
   }
 
   setHealth(health,maxHealth,armor=0) {
     const pct=Math.max(0,health/maxHealth)*100;
-    document.getElementById("health-fill").style.width=pct+"%";
-    document.getElementById("health-value").textContent=Math.ceil(health);
+    const fill=document.getElementById("health-fill"); const width=pct+"%"; if(fill.style.width!==width) fill.style.width=width;
+    const value=document.getElementById("health-value"); const healthText=String(Math.ceil(health)); if(value.textContent!==healthText) value.textContent=healthText;
     const row=document.querySelector(".health-row");
     row.classList.toggle("health-critical",pct<35);
     row.dataset.armor=armor>0?"ARMOUR "+armor:"";
   }
 
   setAmmo(data) {
-    document.getElementById("hud-weapon").textContent=data.name||"";
-    document.getElementById("hud-ammo").textContent=String(data.ammo??0).padStart(2,"0");
-    document.getElementById("hud-reserve").textContent=String(data.reserve??0).padStart(3,"0");
-    document.getElementById("hud-weapon").classList.toggle("upgraded",Boolean(data.upgraded));
+    const name=document.getElementById("hud-weapon");
+    if(name.textContent!==(data.name||"")) name.textContent=data.name||"";
+    const slots=document.getElementById("weapon-slots");
+    if(slots) {
+      const signature=(data.slots||[]).map(item=>item.id+":"+item.active).join("|")+"|"+Boolean(data.melee);
+      if(slots.dataset.signature!==signature) {
+        slots.dataset.signature=signature;
+        slots.innerHTML=(data.slots||[]).map(item=>`<div class="weapon-slot ${item.active&&!data.melee?"active":""}"><small>${item.slot}</small><b>${item.name}</b></div>`).join("")+`<div class="weapon-slot knife-slot ${data.melee?"active":""}"><small>V</small><b>KNIFE</b></div>`;
+      }
+    }
+    const ammo=document.getElementById("hud-ammo"); const ammoText=String(data.ammo??0).padStart(2,"0"); if(ammo.textContent!==ammoText) ammo.textContent=ammoText;
+    const reserve=document.getElementById("hud-reserve"); const reserveText=String(data.reserve??0).padStart(3,"0"); if(reserve.textContent!==reserveText) reserve.textContent=reserveText;
+    name.classList.toggle("upgraded",Boolean(data.upgraded));
+    document.getElementById("hud-ammo").closest(".ammo").classList.toggle("hidden",Boolean(data.melee));
   }
 
   setPerks(perks) {
