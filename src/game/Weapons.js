@@ -23,6 +23,11 @@ export class WeaponSystem {
     this.onHit=onHit;
     this.inventory=[];
     this.slot=0;
+    this.melee=false;
+    this.meleeTimer=0;
+    this.recoil=0;
+    this.bobTime=0;
+    this.reloadPhase=0;
     this.cooldown=0;
     this.reloadTimer=0;
     this.reloading=false;
@@ -32,6 +37,7 @@ export class WeaponSystem {
     this.model=new THREE.Group();
     this.camera.add(this.model);
     this.model.position.set(0.34,-0.31,-0.62);
+    this.model.rotation.order="YXZ";
     this.muzzle=null;
     this.muzzleLight=null;
     this.muzzleTime=0;
@@ -57,7 +63,7 @@ export class WeaponSystem {
     }
     const weapon=this.createWeapon(id);
     if(replaceSlot>=0 && this.inventory[replaceSlot]) this.inventory[replaceSlot]=weapon;
-    else if(this.inventory.length<2) this.inventory.push(weapon);
+    else if(this.inventory.length<3) this.inventory.push(weapon);
     else this.inventory[this.slot]=weapon;
     this.slot=Math.max(0,this.inventory.indexOf(weapon));
     this.refreshModel();
@@ -131,16 +137,35 @@ export class WeaponSystem {
 
   hud() {
     const g=this.current;
-    return g ? { name:g.name, ammo:g.ammo, reserve:g.reserve, slot:this.slot, count:this.inventory.length, upgraded:g.upgraded } : {name:"",ammo:0,reserve:0};
+    return g ? { name:this.melee?"COMBAT KNIFE":g.name, ammo:g.ammo, reserve:g.reserve, slot:this.slot, count:this.inventory.length, upgraded:g.upgraded, melee:this.melee, slots:this.inventory.map((item,index)=>({name:item.name,id:item.id,slot:index+1,active:index===this.slot})) } : {name:"",ammo:0,reserve:0,slots:[]};
   }
 
   switchTo(slot) {
-    if(slot<0 || slot>=this.inventory.length || slot===this.slot) return;
+    if(slot<0 || slot>=3 || !this.inventory[slot] || slot===this.slot && !this.melee) return;
+    this.melee=false;
     this.slot=slot;
     this.reloading=false;
     this.refreshModel();
     this.notify();
     this.audio?.play("reload");
+  }
+
+  equipKnife() {
+    this.melee=!this.melee;
+    this.reloading=false;
+    this.model.visible=!this.melee;
+    this.notify();
+  }
+
+  meleeAttack(zombies) {
+    if(!this.melee || this.meleeTimer>0) return false;
+    this.meleeTimer=0.48;
+    const direction=this.camera.getWorldDirection(new THREE.Vector3());
+    const origin=this.camera.getWorldPosition(new THREE.Vector3());
+    const hit=zombies.damageRay(origin,direction,2.8,115,false);
+    if(hit) this.onHit?.(hit);
+    this.audio?.play("knife");
+    return true;
   }
 
   cycle() {
@@ -169,7 +194,7 @@ export class WeaponSystem {
       return false;
     }
     const gun=this.current;
-    if(!this.triggerHeld || !gun || this.cooldown>0) return false;
+    if(this.melee || !this.triggerHeld || !gun || this.cooldown>0) return false;
     if(!gun.automatic && this.semiConsumed) return false;
     if(gun.ammo<=0) {
       if(gun.reserve>0) this.reload();
@@ -197,9 +222,7 @@ export class WeaponSystem {
     this.muzzleTime=0.055;
     if(this.muzzle) this.muzzle.visible=true;
     if(this.muzzleLight) this.muzzleLight.intensity=gun.upgraded?5:3;
-    this.model.position.z=-0.62+0.035;
-    this.model.rotation.x=-0.035;
-    setTimeout(()=>{ if(this.model) {this.model.position.z=-0.62;this.model.rotation.x=0;} },55);
+    this.recoil=Math.min(0.12,this.recoil+0.075);
     this.notify();
     return true;
   }
@@ -226,7 +249,7 @@ export class WeaponSystem {
   }
 
   purchase(id, perks) {
-    const cap=perks.has("mule")?3:2;
+    const cap=3;
     const found=this.inventory.findIndex(w=>w.id===id);
     if(found>=0) {
       const gun=this.inventory[found];
@@ -273,6 +296,17 @@ export class WeaponSystem {
   }
 
   update() {
-    if(this.model) this.model.position.y=THREE.MathUtils.lerp(this.model.position.y,this.aiming?-0.27:-0.31,0.16);
+    if(!this.model) return;
+    const dt=0.016;
+    this.meleeTimer=Math.max(0,this.meleeTimer-dt);
+    this.recoil=THREE.MathUtils.damp(this.recoil,0,18,dt);
+    this.bobTime+=dt;
+    const bob=this.aiming?0:Math.sin(this.bobTime*8)*0.006;
+    this.model.position.x=THREE.MathUtils.damp(this.model.position.x,this.aiming?0.12:0.34,12,dt);
+    this.model.position.y=THREE.MathUtils.damp(this.model.position.y,(this.aiming?-0.27:-0.31)+bob-this.recoil*0.2,14,dt);
+    this.model.position.z=THREE.MathUtils.damp(this.model.position.z,-0.62+this.recoil,22,dt);
+    this.model.rotation.x=THREE.MathUtils.damp(this.model.rotation.x,-this.recoil*0.7,20,dt);
+    if(this.melee) this.model.visible=false;
+    else this.model.visible=true;
   }
 }
