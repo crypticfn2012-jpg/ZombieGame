@@ -1,5 +1,8 @@
 import * as THREE from "three";
 
+const toonRamp = new THREE.DataTexture(new Uint8Array([48,48,48,255,126,126,126,255,226,226,226,255]),3,1,THREE.RGBAFormat);
+toonRamp.minFilter=THREE.NearestFilter; toonRamp.magFilter=THREE.NearestFilter; toonRamp.generateMipmaps=false; toonRamp.needsUpdate=true;
+
 const TYPES = {
   standard:{name:"INFECTED",health:95,speed:1.75,damage:9,scale:1,color:0x668477,points:100},
   runner:{name:"RUSHER",health:62,speed:3.05,damage:7,scale:0.92,color:0x9e745d,points:130},
@@ -31,7 +34,7 @@ export class ZombieDirector {
     const group=new THREE.Group();
     const scale=data.scale;
     group.scale.setScalar(scale);
-    const mat=(color,rough=0.88,metal=0.04)=>new THREE.MeshToonMaterial({color});
+    const mat=(color,rough=0.88,metal=0.04)=>new THREE.MeshToonMaterial({color,gradientMap:toonRamp});
     const skin=mat(data.color), dark=mat(0x273a32), cloth=mat(type==="armored"?0x303a43:0x3b4640), eye=mat(0xff443b,0.3,0);
     const part=(x,y,z,sx,sy,sz,material)=>{
       const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);
