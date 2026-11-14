@@ -45,6 +45,7 @@ export class FacilityWorld {
     this.spawnPoints = [];
     this.windows = [];
     this.radiationZones=[];
+    this.roomLights=[];
     this.powerOn = false;
     this.machineRefs = {};
     this.textures=this.makeTextures();
@@ -181,7 +182,7 @@ export class FacilityWorld {
     key.shadow.camera.top = 30; key.shadow.camera.bottom = -75;
     key.shadow.bias = -0.00035;
     this.scene.add(key);
-    const fill = new THREE.PointLight(0x3acbd0, 7, 42, 2);
+    const fill = new THREE.PointLight(0xc69b62, 3.8, 42, 2);
     fill.position.set(0, 4, -22);
     this.scene.add(fill);
     this.buildExterior();
@@ -258,9 +259,9 @@ export class FacilityWorld {
       this.box(group,i,4.7,-8.6,0.18,0.25,0.4,this.materials.metal,{castShadow:false});
       this.box(group,i,4.7,8.6,0.18,0.25,0.4,this.materials.metal,{castShadow:false});
     }
-    const light = new THREE.PointLight(room.color, room.id==="start" ? 8 : 4, 14, 2);
-    light.position.set(0,3.6,0);
-    group.add(light);
+    const light=new THREE.PointLight(room.color,room.id==="start"?3.2:0.85,14,2);
+    light.position.set(0,3.6,0);group.add(light);
+    this.roomLights.push({light,roomId:room.id});
     const lamp = this.box(group,0,4.45,0,2.5,0.12,0.7,this.mat(0xb7d0c5,0.3,0.05,room.color),{castShadow:false});
     lamp.userData.emissiveLamp = true;
     this.box(group,0,3.65,-8.55,5.8,0.92,0.22,this.materials.darkWall,{castShadow:false});
@@ -534,6 +535,11 @@ export class FacilityWorld {
       const lamp=new THREE.PointLight(0x9acb55,1.7,8,2);
       lamp.position.set(wx,1.8,wz);this.scene.add(lamp);
     }
+  }
+
+  restorePower() {
+    this.powerOn=true;
+    for(const entry of this.roomLights) entry.light.intensity=entry.roomId==="start"?5.2:4.1;
   }
 
   isInRadiation(position) {
