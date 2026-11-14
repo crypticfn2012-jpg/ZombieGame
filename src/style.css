@@ -18,3 +18,82 @@
 .hit-marker{font-size:24px;font-weight:900;color:#f4f5ec;text-shadow:0 0 8px rgba(255,255,255,.75)}
 .hit-marker.hit{animation:hit-pop .2s ease-out}
 .hit-marker.headshot{color:#ffc45c;text-shadow:0 0 10px rgba(255,172,57,.9)}
+
+
+/* DEAD FREQUENCY — utilitarian 1990s facility identity */
+:root{--df-paper:#e5dfca;--df-muted:#9b9a88;--df-olive:#777e61;--df-amber:#c49a57;--df-rust:#a65e45;--df-ink:#101512;--df-panel:#171d19}
+#game-root{background:#111713}
+#vignette{box-shadow:inset 0 0 145px 32px rgba(0,0,0,.62)}
+#screen-menu{background:linear-gradient(90deg,rgba(12,16,13,.97) 0%,rgba(12,16,13,.9) 40%,rgba(12,16,13,.18) 100%),linear-gradient(0deg,rgba(10,13,10,.45),transparent 55%)}
+.menu-backdrop-grid{display:none}
+.menu-topline{border-bottom:1px solid rgba(205,192,158,.2);padding-bottom:14px}
+.brand-mark{font:800 23px "Barlow Condensed",sans-serif;letter-spacing:.08em;color:var(--df-paper)}
+.brand-mark span{color:var(--df-amber)}
+.topline-right,.menu-footer{color:#858878;font-size:9px;letter-spacing:.12em}
+.topline-right i{color:var(--df-amber)}
+.menu-content{margin-left:9.3%;width:min(590px,78vw)}
+.eyebrow,.panel-kicker{color:#b8a77d;font-size:9px;letter-spacing:.12em}
+.live-dot{width:6px;height:6px;border-radius:0;background:#b75d48;box-shadow:none}
+.menu-content h1{font:900 clamp(76px,9.5vw,124px)/.78 "Barlow Condensed",Impact,sans-serif;letter-spacing:-.035em;margin:28px 0 24px;color:var(--df-paper);text-shadow:0 8px 30px rgba(0,0,0,.45)}
+.menu-content h1 em{color:var(--df-amber);font-style:normal}
+.menu-subtitle{font:10px/1.9 "DM Mono",monospace;letter-spacing:.15em;color:#a5a18f;border-left:2px solid var(--df-rust);padding-left:12px}
+.menu-actions{gap:6px;width:250px}
+.button{font-size:10px;letter-spacing:.13em;min-height:44px}
+.button-primary{background:var(--df-amber);border-color:#d2b77f;color:#151610;box-shadow:none}
+.button-primary:hover{background:#d7b875;transform:translateX(3px)}
+.button-quiet{border-color:rgba(196,184,151,.18);background:rgba(26,31,25,.62);color:#c9c4b1}
+.button-quiet:hover{border-color:var(--df-amber);background:rgba(56,56,38,.72)}
+.menu-stats{border-color:rgba(205,192,158,.18)}
+.menu-stats small,.death-stats small{color:#8c8d7e}
+.menu-stats strong,.death-stats strong{color:var(--df-paper)}
+.menu-footer b{color:var(--df-rust)}
+.screen-panel{background:rgba(9,13,10,.82);backdrop-filter:blur(7px)}
+.panel-card{background:linear-gradient(145deg,#20261e,#151a16);border:1px solid rgba(197,169,111,.27);box-shadow:0 24px 90px rgba(0,0,0,.58)}
+.panel-card h2{color:var(--df-paper);letter-spacing:.015em}
+.panel-kicker{color:#c0a66f}
+.controls-grid kbd{background:#252d25;border:1px solid #495044;color:#e0d9c2}
+.panel-note{color:#9a9a88}
+.setting-row{color:#b4b09e}
+.setting-row input[type=range]{accent-color:var(--df-amber)}
+.setting-row select{background:#20271f;color:var(--df-paper);border-color:#555a49}
+.hud{color:var(--df-paper)}
+.round-label{color:#d5cfbb}
+.round-label strong{color:#f1e8d1}
+.wave-status{color:#d1ae6c}
+.objective-tag{color:#b5a476}
+.hud-top-right div:last-child{font-family:"DM Mono",monospace;font-size:10px;color:#e0d8c3}
+.mission-heading{font:700 12px "Barlow Condensed",sans-serif;letter-spacing:.12em;color:#e5dfca;margin-top:5px}
+.hud-bottom-left,.hud-bottom-right{background:linear-gradient(135deg,rgba(13,18,14,.88),rgba(13,18,14,.45));border:1px solid rgba(208,194,158,.18);backdrop-filter:blur(4px);padding:11px 13px}
+.hud-bottom-left{border-left:2px solid #a65e45}
+.hud-bottom-right{border-right:2px solid var(--df-amber)}
+.health-icon{border-color:rgba(186,111,82,.7);color:#d18c68}
+.health-track{background:rgba(5,8,6,.8);border-color:rgba(207,198,174,.28)}
+.health-track span{background:linear-gradient(90deg,#9d5748,#c28b65)}
+.health-row.health-critical .health-track span{background:#c64d40}
+.perk-list span{border:1px solid rgba(197,169,111,.45);background:rgba(49,48,34,.8);color:#e0c58c}
+.credits span,.ammo-caption{color:#a6a18d}
+.credits strong{color:#e4c17c}
+.weapon-name.upgraded{color:#b8d1a0}
+.interaction-prompt{background:rgba(16,21,16,.94);border:1px solid rgba(202,174,117,.48);box-shadow:0 8px 30px rgba(0,0,0,.32)}
+.interact-key{background:var(--df-amber);color:#171a12;border-radius:0}
+.toast{background:rgba(16,21,16,.95);border:1px solid rgba(195,171,120,.35);border-left:3px solid var(--df-amber)}
+.toast strong{color:#dfc58e}
+.toast small{color:#c2bda9}
+.crosshair i,.crosshair b{background:#e6e0cf;box-shadow:0 1px 4px #000}
+.boss-title span{color:#d4a06c}
+.boss-track{background:#17130f;border-color:#9b5c43}
+.boss-track span{background:linear-gradient(90deg,#99503c,#d38b5e)}
+.pause-hud-button{border-color:rgba(208,194,158,.28);background:rgba(16,21,16,.7);color:#e3d9be}
+.loading-screen{background:#111713}
+.loading-title{font:900 38px "Barlow Condensed",sans-serif;letter-spacing:.04em;color:var(--df-paper)}
+.loading-title span{color:var(--df-amber)}
+.loading-track{background:#33392e}
+.loading-track span{background:var(--df-amber)}
+.loading-screen small{color:#a29b82}
+.weapon-slot{background:rgba(13,18,14,.9);border-color:rgba(202,190,157,.2);box-shadow:0 5px 18px rgba(0,0,0,.2)}
+.weapon-slot small{color:#aaa58f}
+.weapon-slot b{color:#e2ddca}
+.weapon-slot.active{border-color:var(--df-amber);background:linear-gradient(135deg,rgba(76,61,34,.95),rgba(15,21,15,.95));box-shadow:inset 0 -2px var(--df-amber),0 4px 18px rgba(0,0,0,.18)}
+.weapon-slot.active small{color:#e8c987}
+.button-primary:hover{background:#d7b875}
+@media(max-width:700px){.menu-content h1{font-size:clamp(62px,16vw,88px)}.topline-right{max-width:65%;text-align:right}.mission-heading{font-size:10px}}
