@@ -14,3 +14,7 @@
 .live-dot{background:#dc715c;box-shadow:0 0 10px #dc715c}
 .objective-tag{color:#d1a85e}
 @media(max-width:700px){.weapon-slots{right:13px;bottom:120px;gap:4px}.weapon-slot{min-width:57px;padding:5px}.weapon-slot b{font-size:7px}.weapon-slot small{font-size:8px}.hud-bottom-right{min-width:135px;padding:8px}.hud-bottom-left{padding:8px}}
+
+.hit-marker{font-size:24px;font-weight:900;color:#f4f5ec;text-shadow:0 0 8px rgba(255,255,255,.75)}
+.hit-marker.hit{animation:hit-pop .2s ease-out}
+.hit-marker.headshot{color:#ffc45c;text-shadow:0 0 10px rgba(255,172,57,.9)}
