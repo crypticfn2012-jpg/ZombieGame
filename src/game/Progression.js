@@ -232,7 +232,7 @@ export class ProgressionSystem {
       {title:"BRING THE FACILITY ONLINE",objective:"FIND THE GENERATOR SWITCH"},
       {title:"RECOVER PROJECT LANTERN FILES",objective:"COLLECT ALL 3 CLASSIFIED RECORDS"},
       {title:"TRACE THE SIGNAL",objective:"ACCESS THE ARCHIVE TERMINAL"},
-      {title:"ARM THE REACTOR",objective:"REACH THE REACTOR CHAMBER"},
+      {title:"ARM THE REACTOR",objective:"UPGRADE A WEAPON AT PACK-A-PUNCH"},
       {title:"SILENCE THE SOURCE",objective:"DEFEAT THE EXPERIMENT"},
       {title:"OPERATION COMPLETE",objective:"THE SIGNAL HAS FALLEN SILENT"}
     ];
