@@ -20,6 +20,8 @@ export class BlacksiteGame {
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure=1.12;
     this.scene=new THREE.Scene();
+    // The first-person weapon is parented to the camera, so the camera must be in the scene graph.
+    this.scene.add(this.camera);
     this.camera=new THREE.PerspectiveCamera(85,window.innerWidth/window.innerHeight,0.08,150);
     this.audio=new AudioSystem();
     this.save=new SaveSystem();
@@ -229,7 +231,7 @@ export class BlacksiteGame {
     this.roundKills++;
     this.progression.earn(points,headshot);
     this.ui.setPoints(this.progression.points);
-    if(headshot) this.ui.hitMarker();
+    
     if(zombie.data.boss) {
       this.ui.notify("BOSS ELIMINATED","Facility threat level reduced.");
       this.progression.player.heal(35);
@@ -240,7 +242,7 @@ export class BlacksiteGame {
   }
 
   onWeaponHit(hit) {
-    this.ui.hitMarker();
+    this.ui.hitMarker(Boolean(hit?.headshot));
   }
 
   onPlayerDamage(amount,zombie) {
