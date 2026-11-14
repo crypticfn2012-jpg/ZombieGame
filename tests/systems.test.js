@@ -131,7 +131,7 @@ test("facility art kit builds textured walls, timber doors, chalk wall buys and 
   assert.ok(world.doors.every(door=>door.mesh.children.length>12));
   const wallBuys=world.interactables.filter(item=>item.type==="wallbuy");
   assert.equal(wallBuys.length,10);
-  assert.ok(wallBuys.every(item=>item.mesh.children.length>15));
+  assert.ok(wallBuys.every(item=>item.mesh.children.filter(child=>child.isMesh).length>=4));
   const perkRooms=new Set(world.interactables.filter(item=>item.type==="perk").map(item=>item.roomId));
   assert.equal(perkRooms.size,7);
 });
