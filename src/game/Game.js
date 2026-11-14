@@ -13,10 +13,9 @@ export class BlacksiteGame {
   constructor() {
     this.canvas=document.getElementById("game-canvas");
     this.renderer=new THREE.WebGLRenderer({canvas:this.canvas,antialias:true,alpha:false,powerPreference:"high-performance"});
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.1));
     this.renderer.setSize(window.innerWidth,window.innerHeight,false);
-    this.renderer.shadowMap.enabled=true;
-    this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.enabled=false;
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure=1.12;
@@ -71,7 +70,7 @@ export class BlacksiteGame {
   bindEvents() {
     this.canvas.addEventListener("mousedown",(event)=>{
       if(this.state!=="playing") return;
-      if(event.button===0) {this.weapons.setTrigger(true);this.audio.ensure();}
+      if(event.button===0) { if(this.weapons.melee) this.weapons.meleeAttack(this.zombies); else this.weapons.setTrigger(true); this.audio.ensure();}
       if(event.button===2) this.weapons.setAim(true);
     });
     window.addEventListener("mouseup",(event)=>{
@@ -87,6 +86,7 @@ export class BlacksiteGame {
       if(event.code==="Digit1") this.weapons.switchTo(0);
       if(event.code==="Digit2") this.weapons.switchTo(1);
       if(event.code==="Digit3") this.weapons.switchTo(2);
+      if(event.code==="KeyV" || event.code==="KeyQ") this.weapons.equipKnife();
       if(event.code==="KeyE"||event.code==="KeyF") this.interact();
     });
     document.addEventListener("pointerlockchange",()=>{
@@ -107,10 +107,9 @@ export class BlacksiteGame {
     this.player?.setSensitivity(settings.sensitivity);
     if(this.camera) this.camera.fov=settings.fov, this.camera.updateProjectionMatrix();
     if(this.renderer) {
-      const ratio=settings.quality==="low"?1:settings.quality==="medium"?Math.min(window.devicePixelRatio||1,1.25):Math.min(window.devicePixelRatio||1,1.65);
+      const ratio=settings.quality==="low"?0.8:settings.quality==="medium"?0.95:Math.min(window.devicePixelRatio||1,1.15);
       this.renderer.setPixelRatio(ratio);
-      this.renderer.shadowMap.enabled=settings.quality!=="low";
-      this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+      this.renderer.shadowMap.enabled=false;
       this.scene.fog.density=settings.quality==="low"?0.009:settings.quality==="medium"?0.011:0.012;
     }
   }
@@ -137,6 +136,9 @@ export class BlacksiteGame {
     this.player.reset();
     this.weapons.inventory=[];
     this.weapons.slot=0;
+    this.weapons.melee=false;
+    this.weapons.model.visible=true;
+    this.weapons.knifeModel.visible=false;
     this.weapons.reloading=false;
     this.weapons.reloadTimer=0;
     this.weapons.cooldown=0;
@@ -381,7 +383,7 @@ export class BlacksiteGame {
 
   update(dt) {
     this.elapsed+=dt;
-    this.world.update(this.elapsed);
+    if(this.state==="playing") this.world.update(this.elapsed);
     if(this.state!=="playing") return;
     this.runSeconds+=dt;
     this.player.update(dt,this.progression.perks);
@@ -409,7 +411,7 @@ export class BlacksiteGame {
     const dt=Math.min(0.05,(now-this.lastFrame)/1000);
     this.lastFrame=now;
     this.update(dt);
-    this.renderer.render(this.scene,this.camera);
+    if(this.state==="playing" || this.state==="menu") this.renderer.render(this.scene,this.camera);
   }
 
   dispose() {
