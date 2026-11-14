@@ -434,13 +434,13 @@ export class FacilityWorld {
     // Infirmary: two beds with raised headboards and privacy screens.
     for(const x of [-5,5]){
       this.addProp("medical",x,0,2.4,0.55,4.8,0x9a9a87,{collider:false});
-      this.addProp("medical",x,1.15,-1.75,2.4,0.35,0.22,0x657c75,{collider:false});
+      this.addProp("medical",x,-1.75,2.4,0.35,0.22,0x657c75,{collider:false});
       this.addProp("medical",x,0.78,0,2.0,0.18,3.7,0xb5b6a8,{collider:false});
     }
     // Biology lab: work benches and observation tanks.
     for(const x of [-5,5]){
       this.addProp("research",x,0,2.4,1.1,3.8,0x53625d,{collider:false});
-      for(let i=0;i<3;i++)this.addProp("research",x-0.6+i*0.6,0.62,-0.5,0.18,0.16,0.18,0xc1b99c,{collider:false});
+      for(let i=0;i<3;i++)this.addProp("research",x-0.6+i*0.6,-0.5,0.18,0.16,0.18,0xc1b99c,{collider:false});
     }
     // Generator hall: cable cabinets and chunky pipe runs.
     for(const z of [-5,5]){
@@ -450,13 +450,13 @@ export class FacilityWorld {
     // Observation ward: reinforced glass cells and floor warning stripes.
     for(const x of [-6,6]){
       this.addProp("testing",x,-1,0.35,3.2,5.5,0x637b78,{collider:false});
-      this.addProp("testing",x,0.68,0,0.42,0.12,5.3,0xb28d53,{collider:false});
+      this.addProp("testing",x,0.68,0.42,0.12,5.3,0xb28d53,{collider:false});
     }
     // Reactor chamber: segmented containment pylons around the central machine.
     for(let i=0;i<4;i++){
       const a=i*Math.PI/2, x=Math.cos(a)*5.6,z=Math.sin(a)*5.6;
       this.addProp("pap",x,z,0.85,3.6,0.85,0x596b61,{collider:false});
-      this.addProp("pap",x,1.95,z,1.05,0.12,1.05,0xb2a16d,{collider:false});
+      this.addProp("pap",x,z,1.05,0.12,1.05,0xb2a16d,{collider:false});
     }
     for (const room of ROOM_DATA) {
       for (const side of [-1,1]) {
