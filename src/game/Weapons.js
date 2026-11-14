@@ -106,7 +106,7 @@ export class WeaponSystem {
     const upgraded=gun.upgraded;
     const bodyColor=upgraded?0x304d57:gun.color;
     const makeMat=(color,metalness=0.18,roughness=0.72,emissive=0)=>new THREE.MeshStandardMaterial({
-      color,metalness,roughness,emissive,emissiveIntensity:upgraded?0.35:0.05,depthTest=false,depthWrite=false,toneMapped=false
+      color,metalness,roughness,emissive,emissiveIntensity:upgraded?0.35:0.05,depthTest:false,depthWrite:false,toneMapped:false
     });
     const body=makeMat(bodyColor,0.22,0.68),dark=makeMat(0x20272a,0.08,0.9);
     const grip=makeMat(0x303638,0.02,0.95),metal=makeMat(0x899397,0.62,0.42);
