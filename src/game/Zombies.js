@@ -23,7 +23,7 @@ export class ZombieDirector {
     this.projectiles=[];
     this.shockwaves=[];
     this.lastPlayerPosition=new THREE.Vector3();
-    this.maxAlive=34;
+    this.maxAlive=18;
   }
 
   makeZombie(type) {
@@ -31,13 +31,13 @@ export class ZombieDirector {
     const group=new THREE.Group();
     const scale=data.scale;
     group.scale.setScalar(scale);
-    const mat=(color,rough=0.88,metal=0.04)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
+    const mat=(color,rough=0.88,metal=0.04)=>new THREE.MeshToonMaterial({color});
     const skin=mat(data.color), dark=mat(0x273a32), cloth=mat(type==="armored"?0x303a43:0x3b4640), eye=mat(0xff443b,0.3,0);
     const part=(x,y,z,sx,sy,sz,material)=>{
       const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);
       m.position.set(x,y,z);
-      m.castShadow=true;
-      m.receiveShadow=true;
+      m.castShadow=false;
+      m.receiveShadow=false;
       group.add(m);
       return m;
     };
@@ -64,9 +64,7 @@ export class ZombieDirector {
       part(-0.34,2.1,-0.08,0.15,0.38,0.15,mat(0x2d303c));
       part(0.34,2.1,-0.08,0.15,0.38,0.15,mat(0x2d303c));
     }
-    const aura=new THREE.PointLight(data.boss?0xb64cff:type==="explosive"?0xff823f:0x79b8a1,data.boss?2.6:0.55,data.boss?8:3);
-    aura.position.y=1.45;
-    group.add(aura);
+    const aura=null;
     return {group,type,data,hp:data.health,maxHp:data.health,armL,armR,legL,legR,torso,aura,attackTimer:0,specialTimer:1.4,chargeTime:0,chargeDirection:new THREE.Vector3(),phase:Math.random()*Math.PI*2,dead:false,roomId:"start",hurt:0};
   }
 
@@ -152,6 +150,7 @@ export class ZombieDirector {
   }
 
   update(dt, player, world, round) {
+    this.clock=(this.clock||0)+dt;
     const targetPos=player.camera.position;
     this.lastPlayerPosition.copy(targetPos);
     const playerRoom=world.roomAt(targetPos);
@@ -164,20 +163,21 @@ export class ZombieDirector {
         zombie.torso.material.emissive.setHex(0x000000);
       }
       const zpos=zombie.group.position;
-      let target=new THREE.Vector3(targetPos.x,0,targetPos.z);
+      let targetX=targetPos.x,targetZ=targetPos.z;
       if(zombie.roomId!==playerRoom) {
         const route=world.route(zombie.roomId,playerRoom);
         if(route && route.length) {
           const portal=world.portalFor(route[0],zombie.roomId);
-          target.set(portal.x,0,portal.z);
+          targetX=portal.x; targetZ=portal.z;
           if(Math.hypot(zpos.x-portal.x,zpos.z-portal.z)<1.55) zombie.roomId=portal.toRoom;
         } else {
           const room=world.rooms.get(zombie.roomId);
-          if(room) target.set(room.x,0,room.z);
+          if(room) {targetX=room.x; targetZ=room.z;}
         }
       }
-      const delta=target.clone().sub(zpos);
-      const dist=delta.length();
+      const dx=targetX-zpos.x,dz=targetZ-zpos.z;
+      const dist=Math.sqrt(dx*dx+dz*dz);
+      const delta=new THREE.Vector3(dx,0,dz);
       if(dist>0.12) {
         delta.normalize();
         const speed=zombie.data.speed*(zombie.data.boss?1:1+Math.min(0.36,(round-1)*0.012));
@@ -201,7 +201,7 @@ export class ZombieDirector {
         }
         zpos.x=nx; zpos.z=nz;
       }
-      const time=performance.now()*0.001+zombie.phase;
+      const time=this.clock+zombie.phase;
       zombie.legL.rotation.x=Math.sin(time*5)*0.48;
       zombie.legR.rotation.x=-Math.sin(time*5)*0.48;
       zombie.armL.rotation.x=-0.55+Math.sin(time*5+1)*0.38;
