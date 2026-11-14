@@ -88,8 +88,9 @@ test("shots register against the zombie body at normal first-person crosshair he
   const hit=director.damageRay(new THREE.Vector3(0,1.7,0),new THREE.Vector3(0,0,-1),60,34,false);
   assert.ok(hit);
   assert.equal(hit.zombie,zombie);
-  assert.equal(hit.damage,34);
-  assert.equal(zombie.hp,61);
+  assert.equal(hit.damage,56);
+  assert.equal(hit.headshot,true);
+  assert.equal(zombie.hp,39);
   assert.ok(zombie.hurt>0);
   assert.ok(zombie.flashMaterials.length>0);
 });
