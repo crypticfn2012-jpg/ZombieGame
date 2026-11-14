@@ -44,6 +44,7 @@ export class FacilityWorld {
     this.colliders = [];
     this.spawnPoints = [];
     this.windows = [];
+    this.radiationZones=[];
     this.powerOn = false;
     this.machineRefs = {};
     this.textures=this.makeTextures();
@@ -139,6 +140,7 @@ export class FacilityWorld {
     for (const room of ROOM_DATA) this.buildRoom(room);
     for (const link of DOOR_DATA) this.buildDoor(link);
     this.buildProps();
+    this.buildHazards();
     this.buildMachines();
     this.buildAmbientDetails();
     this.spawnPoints = this.windows.map(win=>({room:win.roomId,x:win.outside.x,z:win.outside.z,window:win}));
@@ -465,6 +467,30 @@ export class FacilityWorld {
         this.box(this.scene,room.x-6+i*6,0.2,room.z+7,1.2,0.4,1.2,this.materials.black);
       }
     }
+  }
+
+  buildHazards() {
+    const glow=this.mat(0x9acb55,0.3,0,0x5d8c25);
+    const stripe=this.mat(0xc49b53,0.7,0.05);
+    const barrel=this.mat(0x65704a,0.85,0.1);
+    for(const [roomId,x,z,radius] of [["research",-6,5,3.2],["pap",6,-5,3.4],["testing",0,5,2.8]]) {
+      const room=this.rooms.get(roomId),wx=room.x+x,wz=room.z+z;
+      this.radiationZones.push({roomId,x:wx,z:wz,radius});
+      const pool=this.box(this.scene,wx,0.025,wz,3.2,0.045,2.4,glow,{castShadow:false});
+      pool.material.transparent=true;pool.material.opacity=0.42;
+      for(let i=0;i<3;i++){
+        const bx=wx-1.4+i*1.4;
+        this.box(this.scene,bx,0.9,wz+2.0,0.68,1.8,0.68,barrel,{castShadow:false});
+        this.box(this.scene,bx,1.84,wz+2.0,0.72,0.08,0.72,stripe,{castShadow:false});
+        this.box(this.scene,bx,0.95,wz+1.64,0.72,0.16,0.08,glow,{castShadow:false});
+      }
+      const lamp=new THREE.PointLight(0x9acb55,1.7,8,2);
+      lamp.position.set(wx,1.8,wz);this.scene.add(lamp);
+    }
+  }
+
+  isInRadiation(position) {
+    return this.radiationZones.some(zone=>Math.hypot(position.x-zone.x,position.z-zone.z)<zone.radius);
   }
 
   addMachine(id,type,name,roomId,x,z,color,cost,description) {
