@@ -558,7 +558,7 @@ export class FacilityWorld {
   buildMachines() {
     this.addMachine("jugger","perk","JUGGERNAUT", "medical", -5,-3,0xb4473e,2500,"INCREASE MAXIMUM HEALTH");
     this.addMachine("speed","perk","SPEED COLA", "storage",5,-4,0x31b76b,2000,"FASTER RELOADS");
-    this.addMachine("quick","perk","QUICK REVIVE", "testing",5,3,0x3e9fd1,1500,"FASTER RECOVERY");
+    this.addMachine("quick","perk","QUICK REVIVE", "testing",5,-3,0x3e9fd1,1500,"FASTER RECOVERY");
     this.addMachine("double","perk","DOUBLE DAMAGE", "lab",-5,-3,0xd6a23b,3000,"INCREASE WEAPON DAMAGE");
     this.addMachine("stamina","perk","STAMIN-UP", "start",-6,5,0x8e6bd1,2000,"MOVE AND SPRINT FASTER");
     this.addMachine("deadshot","perk","DEADSHOT", "research",5,-3,0x4ab2aa,2500,"MORE CRITICAL DAMAGE");
@@ -573,7 +573,7 @@ export class FacilityWorld {
     this.addMachine("document-b","document","SUBJECT R-09","testing",5,3,0xd7ca9a,0,"COLLECT RESEARCH DOCUMENT");
     this.addMachine("document-c","document","FINAL TRANSMISSION","arena",0,5,0xd7ca9a,0,"COLLECT RESEARCH DOCUMENT");
     const buys = [
-      ["buy-rifle","rifle","SERVICE RIFLE","start",0,"east",0x9b9a80,1200],
+      ["buy-rifle","rifle","SERVICE RIFLE","start",-5.5,"east",0x9b9a80,1200],
       ["buy-smg","smg","COMPACT SMG","storage",-4,"east",0xb7a05d,1400],
       ["buy-shotgun","shotgun","PUMP SHOTGUN","lab",4,"west",0xc18b48,1700],
       ["buy-burst","burst","BURST RIFLE","research",-4,"west",0x8e9d8c,1900],
