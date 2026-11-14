@@ -1,15 +1,15 @@
 import * as THREE from "three";
 
 const ROOM_DATA = [
-  { id:"start", name:"SECURITY CHECKPOINT", x:0, z:0, color:0x60727b, doors:["start-lab","start-storage","start-medical"] },
-  { id:"lab", name:"MAIN LABORATORY", x:0, z:-22, color:0x4b8c9a, doors:["start-lab","lab-arena"] },
-  { id:"storage", name:"STORAGE FACILITY", x:22, z:0, color:0x9a744a, doors:["start-storage","storage-research"] },
-  { id:"medical", name:"MEDICAL WING", x:-22, z:0, color:0x79a39a, doors:["start-medical","medical-power"] },
-  { id:"power", name:"POWER CONTROL", x:-22, z:-22, color:0xc18b48, doors:["medical-power","power-testing"] },
-  { id:"research", name:"RESEARCH WING", x:22, z:-22, color:0x6a7da1, doors:["storage-research","research-pap"] },
-  { id:"testing", name:"TEST CHAMBER", x:-22, z:-44, color:0x9a5a54, doors:["power-testing","testing-arena"] },
-  { id:"pap", name:"REACTOR VAULT", x:22, z:-44, color:0x6b9d99, doors:["research-pap","pap-arena"] },
-  { id:"arena", name:"CONTAINMENT ARENA", x:0, z:-44, color:0x956c8e, doors:["lab-arena","testing-arena","pap-arena"] }
+  { id:"start", name:"SECURITY CHECKPOINT", x:0, z:0, color:0x9a9b83, doors:["start-lab","start-storage","start-medical"] },
+  { id:"lab", name:"DECONTAMINATION", x:0, z:-22, color:0x9b987e, doors:["start-lab","lab-arena"] },
+  { id:"storage", name:"SUPPLY DEPOT", x:22, z:0, color:0xa68b63, doors:["start-storage","storage-research"] },
+  { id:"medical", name:"INFIRMARY", x:-22, z:0, color:0x8caa9b, doors:["start-medical","medical-power"] },
+  { id:"power", name:"GENERATOR HALL", x:-22, z:-22, color:0xb08c56, doors:["medical-power","power-testing"] },
+  { id:"research", name:"BIOLOGY LAB", x:22, z:-22, color:0x829a8b, doors:["storage-research","research-pap"] },
+  { id:"testing", name:"OBSERVATION WARD", x:-22, z:-44, color:0x9b8272, doors:["power-testing","testing-arena"] },
+  { id:"pap", name:"REACTOR CHAMBER", x:22, z:-44, color:0x9a9a78, doors:["research-pap","pap-arena"] },
+  { id:"arena", name:"CORE ACCESS", x:0, z:-44, color:0x938b7b, doors:["lab-arena","testing-arena","pap-arena"] }
 ];
 
 const DOOR_DATA = [
@@ -46,19 +46,60 @@ export class FacilityWorld {
     this.windows = [];
     this.powerOn = false;
     this.machineRefs = {};
+    this.textures=this.makeTextures();
     this.materials = {
-      wall: this.mat(0x3b494e, 0.92, 0.02),
+      wall: new THREE.MeshToonMaterial({color:0xc0b9a4,map:this.textures.concrete,gradientMap:toonRamp}),
       darkWall: this.mat(0x1b272e, 0.9, 0.1),
-      floor: this.mat(0x414b4e, 0.9, 0.02),
+      floor: new THREE.MeshToonMaterial({color:0x9d9a88,map:this.textures.floor,gradientMap:toonRamp}),
       trim: this.mat(0x758286, 0.75, 0.08),
       metal: this.mat(0x6f7c7d, 0.62, 0.3),
       black: this.mat(0x11191e, 0.45, 0.45),
       cyan: this.mat(0x38d9dc, 0.35, 0.18, 0x0c6267),
       amber: this.mat(0xffb34f, 0.4, 0.18, 0x71421c),
       red: this.mat(0xd94c48, 0.5, 0.15, 0x5b100e),
-      glass: new THREE.MeshStandardMaterial({ color:0x6ac6d0, roughness:0.15, metalness:0.25, transparent:true, opacity:0.22 })
+      glass: new THREE.MeshStandardMaterial({ color:0x6ac6d0, roughness:0.15, metalness:0.25, transparent:true, opacity:0.22 }),
+      wood: new THREE.MeshToonMaterial({color:0xc49a64,map:this.textures.wood,gradientMap:toonRamp}),
+      chalk: this.mat(0xe4dfc9,0.95,0),
+      paint: this.mat(0x68786a,0.9,0.02),
+      rust: this.mat(0x704b36,0.95,0.05),
+      tile: new THREE.MeshToonMaterial({color:0xb0ad9b,map:this.textures.tile,gradientMap:toonRamp})
     };
     this.build();
+  }
+
+  makeTextures() {
+    const make=(kind,base,repeatX=2,repeatY=2)=>{
+      const size=32,data=new Uint8Array(size*size*4);
+      let seed=kind==="wood"?9173:kind==="floor"?1729:kind==="tile"?4817:7727;
+      const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+      const rgb=[(base>>16)&255,(base>>8)&255,base&255];
+      for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+        let n=(rand()-0.5)*(kind==="concrete"?38:kind==="wood"?28:18);
+        if(kind==="concrete"&&y%8===0)n-=18;
+        if(kind==="concrete"&&x%16===0&&y%8<2)n-=12;
+        if(kind==="wood"){
+          if(x%8===0)n-=34;
+          if(y%11===0)n-=10;
+          if((x+y*3)%29===0)n+=20;
+        }
+        if(kind==="floor"&&(x%8===0||y%8===0))n-=30;
+        if(kind==="tile"&&(x%16===0||y%16===0))n-=35;
+        const i=(y*size+x)*4;
+        for(let c=0;c<3;c++)data[i+c]=Math.max(0,Math.min(255,Math.round(rgb[c]+n)));
+        data[i+3]=255;
+      }
+      const tex=new THREE.DataTexture(data,size,size,THREE.RGBAFormat);
+      tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;
+      tex.repeat.set(repeatX,repeatY);tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.LinearMipmapLinearFilter;
+      tex.generateMipmaps=true;tex.colorSpace=THREE.SRGBColorSpace;tex.needsUpdate=true;
+      return tex;
+    };
+    return {
+      concrete:make("concrete",0x999589,2,1),
+      wood:make("wood",0x9a7048,1,2),
+      floor:make("floor",0x77766d,4,4),
+      tile:make("tile",0x99988c,4,4)
+    };
   }
 
   mat(color, roughness=0.8, metalness=0.1, emissive=0x000000) {
@@ -151,8 +192,10 @@ export class FacilityWorld {
     group.position.set(room.x,0,room.z);
     group.userData.roomId = room.id;
     this.scene.add(group);
-    this.box(group,0,-0.42,0,18,0.8,18,this.materials.floor);
+    this.box(group,0,-0.42,0,18,0.8,18,room.id==="medical"||room.id==="lab"?this.materials.tile:this.materials.floor);
     this.box(group,0,4.9,0,18,0.35,18,this.materials.darkWall,{castShadow:false});
+    this.box(group,0,0.11,-8.56,17.8,0.16,0.08,this.materials.paint,{castShadow:false});
+    this.box(group,0,0.11,8.56,17.8,0.16,0.08,this.materials.paint,{castShadow:false});
     this.box(group,0,0.04,-8.8,18,0.3,0.35,this.materials.trim);
     this.box(group,0,0.04,8.8,18,0.3,0.35,this.materials.trim);
     const windowSide=["south","east","west","north"].find(side=>!this.hasDoorAt(room,side));
@@ -170,9 +213,12 @@ export class FacilityWorld {
     group.add(light);
     const lamp = this.box(group,0,4.45,0,2.5,0.12,0.7,this.mat(0xb7d0c5,0.3,0.05,room.color),{castShadow:false});
     lamp.userData.emissiveLamp = true;
-    const sign = this.box(group,0,3.55,-8.6,4.6,0.8,0.18,this.materials.darkWall);
-    const signGlow = this.box(group,0,3.55,-8.48,3.8,0.035,0.045,this.mat(room.color,0.3,0,room.color));
-    signGlow.userData.sign = true;
+    this.box(group,0,3.65,-8.55,5.8,0.92,0.22,this.materials.darkWall,{castShadow:false});
+    this.box(group,0,4.12,-8.41,5.55,0.06,0.05,this.materials.amber,{castShadow:false});
+    this.box(group,-2.25,3.65,-8.4,0.12,0.55,0.06,this.materials.amber,{castShadow:false});
+    this.box(group,2.25,3.65,-8.4,0.12,0.55,0.06,this.materials.amber,{castShadow:false});
+    this.box(group,0,3.18,-8.41,5.55,0.06,0.05,this.materials.amber,{castShadow:false});
+    for(let i=0;i<5;i++)this.box(group,-1.5+i*0.75,3.62,-8.38,0.35,0.08,0.04,this.mat(room.color),{castShadow:false});
     if (room.id === "start") {
       this.box(group,0,0.6,0,2.7,1.2,2.7,this.materials.darkWall);
       this.box(group,0,1.28,0,2.2,0.16,2.2,this.materials.trim);
@@ -246,23 +292,48 @@ export class FacilityWorld {
     }
   }
   buildDoor(link) {
-    const a = this.rooms.get(link.a), b = this.rooms.get(link.b);
-    const x = (a.x+b.x)/2, z = (a.z+b.z)/2;
-    const mesh = new THREE.Group();
-    mesh.position.set(x,0,z);
-    const panel = this.box(mesh,0,1.95,0,link.axis==="x" ? 0.35 : 4.1,3.9,link.axis==="x" ? 4.1 : 0.35,this.materials.red);
-    this.box(mesh,0,3.95,0,link.axis==="x" ? 0.55 : 4.3,0.18,link.axis==="x" ? 4.3 : 0.55,this.materials.amber);
-    const indicator = this.box(mesh,0,2.2,0,link.axis==="x" ? 0.12 : 0.28,0.3,link.axis==="x" ? 0.28 : 0.12,this.materials.amber);
+    const a=this.rooms.get(link.a),b=this.rooms.get(link.b);
+    const x=(a.x+b.x)/2,z=(a.z+b.z)/2;
+    const mesh=new THREE.Group();mesh.position.set(x,0,z);
+    const alongZ=link.axis==="x";
+    const wood=this.materials.wood, dark=this.materials.darkWall, metal=this.materials.metal;
+    const post=(px,pz,sx,sz)=>this.box(mesh,px,1.95,pz,sx,3.9,sz,dark);
+    if(alongZ){
+      post(0,-2.18,0.46,0.42);post(0,2.18,0.46,0.42);
+      this.box(mesh,0,3.95,0,0.48,0.28,4.65,metal);
+      for(let i=0;i<8;i++){
+        const zz=-1.75+i*0.5;
+        this.box(mesh,0,1.88,zz,0.28,3.72,0.48,wood);
+        this.box(mesh,0.16,1.88,zz,0.035,3.62,0.035,this.materials.rust,{castShadow:false});
+      }
+      for(const y of [0.65,2.95]){
+        this.box(mesh,0.2,y,0,0.12,0.18,3.75,metal,{castShadow:false});
+        this.box(mesh,-0.2,y,0,0.12,0.18,3.75,metal,{castShadow:false});
+      }
+      this.box(mesh,0,1.95,0,0.16,0.18,0.18,this.materials.amber,{castShadow:false});
+    }else{
+      post(-2.18,0,0.42,0.46);post(2.18,0,0.42,0.46);
+      this.box(mesh,0,3.95,0,4.65,0.28,0.48,metal);
+      for(let i=0;i<8;i++){
+        const xx=-1.75+i*0.5;
+        this.box(mesh,xx,1.88,0,0.48,3.72,0.28,wood);
+        this.box(mesh,xx,1.88,0.16,0.035,3.62,0.035,this.materials.rust,{castShadow:false});
+      }
+      for(const y of [0.65,2.95]){
+        this.box(mesh,0.0,y,0.2,3.75,0.18,0.12,metal,{castShadow:false});
+        this.box(mesh,0.0,y,-0.2,3.75,0.18,0.12,metal,{castShadow:false});
+      }
+      this.box(mesh,0,1.95,0.2,0.18,0.18,0.16,this.materials.amber,{castShadow:false});
+    }
+    const lintel=this.box(mesh,0,4.28,0,alongZ?0.6:4.8,0.12,alongZ?4.8:0.6,this.materials.amber,{castShadow:false});
+    lintel.userData.doorId=link.id;
     this.scene.add(mesh);
-    const door = { ...link, x,z,mesh,panel,indicator,open:false, collider:true };
+    const door={...link,x,z,mesh,panel:mesh,indicator:lintel,open:false,collider:true};
     this.doors.push(door);
-    this.interactables.push({ id:link.id, type:"door", name:"SECURITY BULKHEAD", description:"UNLOCK AREA", price:link.cost, position:new THREE.Vector3(x,1.5,z), mesh, ref:door });
+    this.interactables.push({id:link.id,type:"door",name:"BOARDed SECURITY DOOR",description:"CLEAR THE BARRICADE",price:link.cost,position:new THREE.Vector3(x,1.5,z),mesh,ref:door});
     this.addDoorCollider(door);
-    const corridorX = Math.abs(a.x-b.x)>0 ? (a.x+b.x)/2 : a.x;
-    const corridorZ = Math.abs(a.z-b.z)>0 ? (a.z+b.z)/2 : a.z;
-    this.box(this.scene,corridorX,-0.5,corridorZ,4.25,0.1,4.25,this.materials.floor,{castShadow:false});
+    this.box(this.scene,x,-0.48,z,4.25,0.12,4.25,this.materials.floor,{castShadow:false});
   }
-
   addDoorCollider(door) {
     door.collider = true;
     if (door.axis === "x") this.colliders.push({ x:door.x,z:door.z,sx:0.7,sz:4.1,door:door.id,kind:"door" });
@@ -351,6 +422,40 @@ export class FacilityWorld {
     this.addProp("testing",0,-5,5.5,0.7,5.5,0x6d3230);
     this.addProp("pap",0,0,5.5,1,5.5,0x233c44);
     this.addProp("arena",0,0,4,1,4,0x4c3e55);
+    // Room-specific furniture and practical clutter give each space a readable purpose.
+    // Supply depot: steel shelving, crates and stacked cases.
+    for(let side=0;side<2;side++){
+      const x=side?7:-7;
+      this.addProp("storage",x,-1,0.45,3.2,5.4,0x59645f,{collider:false});
+      for(let y=0;y<3;y++)this.addProp("storage",x,y*0+(-2+y*1.15),-1,4.8,0.12,0.9,0x68766d,{collider:false});
+    }
+    // Infirmary: two beds with raised headboards and privacy screens.
+    for(const x of [-5,5]){
+      this.addProp("medical",x,0,2.4,0.55,4.8,0x9a9a87,{collider:false});
+      this.addProp("medical",x,1.15,-1.75,2.4,0.35,0.22,0x657c75,{collider:false});
+      this.addProp("medical",x,0.78,0,2.0,0.18,3.7,0xb5b6a8,{collider:false});
+    }
+    // Biology lab: work benches and observation tanks.
+    for(const x of [-5,5]){
+      this.addProp("research",x,0,2.4,1.1,3.8,0x53625d,{collider:false});
+      for(let i=0;i<3;i++)this.addProp("research",x-0.6+i*0.6,0.62,-0.5,0.18,0.16,0.18,0xc1b99c,{collider:false});
+    }
+    // Generator hall: cable cabinets and chunky pipe runs.
+    for(const z of [-5,5]){
+      this.addProp("power",-7,z,1.4,3.6,1.5,0x3b4644,{collider:false});
+      this.addProp("power",-7,z,1.45,0.12,1.52,0xb28a4f,{collider:false});
+    }
+    // Observation ward: reinforced glass cells and floor warning stripes.
+    for(const x of [-6,6]){
+      this.addProp("testing",x,-1,0.35,3.2,5.5,0x637b78,{collider:false});
+      this.addProp("testing",x,0.68,0,0.42,0.12,5.3,0xb28d53,{collider:false});
+    }
+    // Reactor chamber: segmented containment pylons around the central machine.
+    for(let i=0;i<4;i++){
+      const a=i*Math.PI/2, x=Math.cos(a)*5.6,z=Math.sin(a)*5.6;
+      this.addProp("pap",x,z,0.85,3.6,0.85,0x596b61,{collider:false});
+      this.addProp("pap",x,1.95,z,1.05,0.12,1.05,0xb2a16d,{collider:false});
+    }
     for (const room of ROOM_DATA) {
       for (const side of [-1,1]) {
         this.addProp(room.id,side*7,0,0.7,3.6,0.7,0x2a363b);
@@ -369,10 +474,17 @@ export class FacilityWorld {
     this.scene.add(group);
     const base=new THREE.MeshToonMaterial({color:0x17252b,gradientMap:toonRamp});
     const shell=new THREE.MeshToonMaterial({color,gradientMap:toonRamp,emissive:color,emissiveIntensity:0.12});
-    this.box(group,0,0.8,0,1.35,1.6,1.0,base);
-    this.box(group,0,1.72,0,1.15,0.3,0.9,shell);
-    this.box(group,0,1.1,0.51,0.72,0.64,0.08,shell);
-    this.box(group,0,0.35,0.51,0.42,0.12,0.08,this.materials.amber);
+    if(type==="wallbuy") {
+      this.box(group,0,1.7,0,2.9,2.35,0.22,this.materials.wood,{castShadow:false});
+      this.box(group,0,1.7,0.13,2.65,2.12,0.06,this.materials.darkWall,{castShadow:false});
+    } else {
+      this.box(group,0,0.8,0,1.35,1.6,1.0,base);
+      this.box(group,0,1.72,0,1.15,0.3,0.9,shell);
+      this.box(group,0,1.1,0.51,0.72,0.64,0.08,shell);
+      this.box(group,0,0.35,0.51,0.42,0.12,0.08,this.materials.amber);
+      this.box(group,-0.58,1.1,0.52,0.08,0.72,0.06,this.materials.amber,{castShadow:false});
+      this.box(group,0.58,1.1,0.52,0.08,0.72,0.06,this.materials.amber,{castShadow:false});
+    }
     const light=new THREE.PointLight(color,1.6,5);
     light.position.set(0,2,0);
     group.add(light);
@@ -383,65 +495,64 @@ export class FacilityWorld {
     return obj;
   }
 
-  addWallBuySilhouette(item, weaponId, color) {
-    const plate=this.mat(0x101a20,0.48,0.55);
-    const profile=this.mat(color,0.46,0.58,0x101010);
-    const edge=this.mat(0xb7c9c8,0.4,0.62);
-    this.box(item.mesh,0,2.58,0.6,2.25,0.86,0.12,plate,{castShadow:false});
+  addWallBuySilhouette(item,weaponId,color) {
+    const chalk=this.materials.chalk;
+    const board=this.materials.darkWall;
+    const frame=this.materials.wood;
+    // A plywood wall plaque with a hand-drawn, blocky chalk weapon profile.
+    this.box(item.mesh,0,1.72,0,2.8,2.25,0.22,frame,{castShadow:false});
+    this.box(item.mesh,0,1.72,0.14,2.55,2.02,0.06,board,{castShadow:false});
     const long=["shotgun","autoShotgun","sniper","launcher","tactical"].includes(weaponId);
-    const bodyWidth=weaponId==="launcher"?0.95:long?0.82:0.62;
-    this.box(item.mesh,-0.02,2.66,0.7,bodyWidth,0.14,0.12,profile,{castShadow:false});
-    this.box(item.mesh,0.56,2.68,0.7,long?0.72:0.42,0.065,0.075,edge,{castShadow:false});
-    this.box(item.mesh,-0.61,2.65,0.7,0.28,0.11,0.12,profile,{castShadow:false});
-    this.box(item.mesh,-0.12,2.43,0.7,0.17,0.3,0.14,profile,{castShadow:false});
-    this.box(item.mesh,0.09,2.43,0.7,0.2,0.25,0.14,edge,{castShadow:false});
-    if(weaponId==="sniper"||weaponId==="tactical") {
-      this.box(item.mesh,0.02,2.84,0.7,0.42,0.09,0.16,edge,{castShadow:false});
-      this.box(item.mesh,0.02,2.91,0.7,0.16,0.08,0.12,profile,{castShadow:false});
-    }
-    if(weaponId==="shotgun"||weaponId==="autoShotgun") {
-      this.box(item.mesh,-0.08,2.48,0.7,0.12,0.15,0.16,profile,{castShadow:false});
-    }
-    if(weaponId==="launcher") {
-      this.box(item.mesh,0.08,2.66,0.7,0.72,0.24,0.22,profile,{castShadow:false});
-      this.box(item.mesh,0.55,2.66,0.7,0.12,0.28,0.24,edge,{castShadow:false});
-    }
+    const width=weaponId==="launcher"?1.15:long?1.35:0.98;
+    const z=0.2;
+    const line=(x,y,w,h)=>this.box(item.mesh,x,y,z,w,h,0.045,chalk,{castShadow:false});
+    // Chalk profile is deliberately geometric, like a hand-drawn wall-buy icon.
+    line(-0.05,1.95,width,0.11);line(0.52,2.04,0.62,0.065);line(-0.62,1.95,0.22,0.16);
+    line(-0.18,1.73,0.14,0.38);line(0.08,1.73,0.16,0.34);
+    line(0.08,2.17,0.38,0.07);line(0.1,2.25,0.12,0.1);
+    line(-0.68,2.1,0.16,0.07);
+    if(weaponId==="sniper"||weaponId==="tactical"){line(-0.02,2.28,0.38,0.08);line(-0.02,2.38,0.12,0.12);}
+    if(weaponId==="shotgun"||weaponId==="autoShotgun"){line(-0.12,1.56,0.12,0.15);line(0.02,1.55,0.12,0.13);}
+    if(weaponId==="launcher"){line(0.02,1.96,0.82,0.28);line(0.62,1.96,0.12,0.34);}
+    // Small chalk price ticks and a colour-coded weapon family strip.
+    const price=item.price.toString();
+    for(let i=0;i<Math.min(price.length,5);i++)this.box(item.mesh,-0.72+i*0.32,0.72,0.2,0.2,0.055,0.04,chalk,{castShadow:false});
+    this.box(item.mesh,0,0.48,0.2,2.15,0.055,0.04,this.mat(color),{castShadow:false});
   }
-
   buildMachines() {
     this.addMachine("jugger","perk","JUGGERNAUT", "medical", -5,-3,0xb4473e,2500,"INCREASE MAXIMUM HEALTH");
     this.addMachine("speed","perk","SPEED COLA", "storage",5,-4,0x31b76b,2000,"FASTER RELOADS");
-    this.addMachine("quick","perk","QUICK REVIVE", "medical",5,-3,0x3e9fd1,1500,"FASTER RECOVERY");
+    this.addMachine("quick","perk","QUICK REVIVE", "testing",5,3,0x3e9fd1,1500,"FASTER RECOVERY");
     this.addMachine("double","perk","DOUBLE DAMAGE", "lab",-5,-3,0xd6a23b,3000,"INCREASE WEAPON DAMAGE");
-    this.addMachine("stamina","perk","STAMIN-UP", "start",6,5,0x8e6bd1,2000,"MOVE AND SPRINT FASTER");
+    this.addMachine("stamina","perk","STAMIN-UP", "start",-6,5,0x8e6bd1,2000,"MOVE AND SPRINT FASTER");
     this.addMachine("deadshot","perk","DEADSHOT", "research",5,-3,0x4ab2aa,2500,"MORE CRITICAL DAMAGE");
     this.addMachine("mule","perk","MULE KICK", "power",5,-3,0xc18b48,3000,"CARRY THREE WEAPONS");
     const pap=this.addMachine("pack","pap","PACK-A-PUNCH","pap",0,0,0x28c9d2,5000,"UPGRADE YOUR HELD WEAPON");
     pap.mesh.scale.set(1.55,1.5,1.55);
-    this.addMachine("power-switch","power","POWER RELAY","power",-5,3,0xffc35e,0,"RESTORE FACILITY POWER");
+    this.addMachine("power-switch","power","GENERATOR SWITCH","power",-5,3,0xffc35e,0,"RESTORE FACILITY POWER");
     const box=this.addMachine("mystery","mystery","MYSTERY CRATE","lab",5,3,0x8f5ce3,950,"RANDOM WEAPON / 950 CREDITS");
     box.mesh.scale.set(1.15,1.1,1.15);
-    this.addMachine("terminal","terminal","RESEARCH TERMINAL","research",-5,3,0x3ec9d2,0,"ACCESS CLASSIFIED FILE");
+    this.addMachine("terminal","terminal","ARCHIVE TERMINAL","research",-5,3,0x3ec9d2,0,"ACCESS CLASSIFIED FILE");
     this.addMachine("document-a","document","INCIDENT REPORT 07","start",-6,-5,0xd7ca9a,0,"COLLECT RESEARCH DOCUMENT");
     this.addMachine("document-b","document","SUBJECT R-09","testing",5,3,0xd7ca9a,0,"COLLECT RESEARCH DOCUMENT");
     this.addMachine("document-c","document","FINAL TRANSMISSION","arena",0,5,0xd7ca9a,0,"COLLECT RESEARCH DOCUMENT");
     const buys = [
-      ["buy-rifle","rifle","SERVICE RIFLE","start",7,-4,0x86a8ab,1200],
-      ["buy-smg","smg","COMPACT SMG","storage",-5,3,0xb7a05d,1400],
-      ["buy-shotgun","shotgun","PUMP SHOTGUN","lab",5,-3,0xc18b48,1700],
-      ["buy-burst","burst","BURST RIFLE","research",-5,-3,0x66a7b7,1900],
-      ["buy-sniper","sniper","TACTICAL DMR","testing",0,5,0x9a9cb0,2400],
-      ["buy-launcher","launcher","GRENADE LAUNCHER","pap",-5,3,0x8eab77,3200],
+      ["buy-rifle","rifle","SERVICE RIFLE","start",7,-5,0x9b9a80,1200],
+      ["buy-smg","smg","COMPACT SMG","storage",-5,4,0xb7a05d,1400],
+      ["buy-shotgun","shotgun","PUMP SHOTGUN","lab",5,-4,0xc18b48,1700],
+      ["buy-burst","burst","BURST RIFLE","research",-5,-4,0x8e9d8c,1900],
+      ["buy-sniper","sniper","TACTICAL DMR","testing",0,5,0x9a9c90,2400],
+      ["buy-launcher","launcher","GRENADE LAUNCHER","pap",-5,4,0x8eab77,3200],
       ["buy-revolver","revolver","HEAVY REVOLVER","medical",0,5,0x9c8167,1800],
-      ["buy-tactical","tactical","TACTICAL CARBINE","storage",5,3,0x758b9c,2300],
-      ["buy-heavy-smg","heavySmg","DRUM SMG","power",5,3,0xb09156,2000],
-      ["buy-auto-shotgun","autoShotgun","BREACH AUTO SHOTGUN","research",0,5,0x9d644b,2600]
+      ["buy-tactical","tactical","TACTICAL CARBINE","storage",5,4,0x758b7c,2300],
+      ["buy-heavy-smg","heavySmg","DRUM SMG","power",5,4,0xb09156,2000],
+      ["buy-auto-shotgun","autoShotgun","BREACH AUTO SHOTGUN","arena",0,5,0x9d644b,2600]
     ];
     for(const [id,weapon,name,room,x,z,color,cost] of buys) {
       const item=this.addMachine(id,"wallbuy",name,room,x,z,color,cost,"PURCHASE " + name);
       item.weapon=weapon;
       this.addWallBuySilhouette(item,weapon,color);
-      item.mesh.scale.set(0.68,0.7,0.68);
+      item.mesh.scale.set(0.9,0.9,0.9);
     }
   }
 
@@ -457,7 +568,7 @@ export class FacilityWorld {
         this.box(this.scene,room.x-7+i*2,0.012,room.z-7,0.035,0.02,0.035,this.materials.trim,{castShadow:false});
       }
     }
-    const grid=new THREE.GridHelper(220,55,0x1d353b,0x14272d);
+    const grid=new THREE.GridHelper(220,55,0x333c36,0x242d29);
     grid.position.set(0,-0.045,-21);
     this.scene.add(grid);
   }
