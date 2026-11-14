@@ -201,11 +201,22 @@ export class WeaponSystem {
       }
     }
 
-    // Sleeve and glove sit below the receiver so the weapon remains readable.
-    const sleeve=mat(0x4a514a,0.02,0.98),glove=mat(0x222724,0.02,0.98);
-    box(-0.19,-0.29,0.27,0.24,0.22,0.38,sleeve);
-    box(-0.06,-0.2,0.015,0.16,0.11,0.19,glove);
-    box(-0.055,-0.16,-0.065,0.17,0.075,0.14,glove);
+    // Layered operator sleeve and shaped voxel glove, with individual fingers.
+    const sleeve=mat(0x343d39,0.02,0.98), sleeveTop=mat(0x56615a,0.02,0.98);
+    const glove=mat(0x252b28,0.02,0.98), gloveEdge=mat(0x424b43,0.02,0.98);
+    const arm=(x,y,z,sx,sy,sz,m,rz=0)=>box(x,y,z,sx,sy,sz,m,rz);
+    arm(-0.23,-0.31,0.34,0.31,0.28,0.48,sleeve,-0.22);
+    arm(-0.23,-0.235,0.19,0.29,0.075,0.12,sleeveTop,-0.22);
+    arm(-0.12,-0.20,0.015,0.19,0.13,0.2,glove,-0.12);
+    arm(-0.105,-0.145,-0.075,0.19,0.075,0.13,gloveEdge,-0.12);
+    for(let finger=0;finger<4;finger++){
+      const fx=-0.17+finger*0.043;
+      arm(fx,-0.225,-0.105,0.035,0.055,0.12,glove,-0.08);
+      arm(fx,-0.232,-0.158,0.036,0.045,0.045,gloveEdge,-0.08);
+    }
+    arm(-0.025,-0.19,-0.015,0.075,0.07,0.15,glove,-0.62);
+    arm(-0.27,-0.32,0.49,0.32,0.045,0.12,gloveEdge,-0.22);
+    arm(-0.23,-0.18,0.34,0.19,0.035,0.19,sleeveTop,-0.22);
     this.muzzle=box(0,0.035,-barrel-0.1,0.1,0.1,0.075,mat(0xffc27a,0,0.4));
     this.muzzle.visible=false;
     this.muzzleLight=new THREE.PointLight(upgraded?0x9ad8c9:0xffb35e,0,1.5);
