@@ -104,81 +104,112 @@ export class WeaponSystem {
     const gun=this.current;
     if(!gun)return;
     const upgraded=gun.upgraded;
-    const bodyColor=upgraded?0x304d57:gun.color;
-    const makeMat=(color,metalness=0.18,roughness=0.72,emissive=0)=>new THREE.MeshStandardMaterial({
-      color,metalness,roughness,emissive,emissiveIntensity:upgraded?0.35:0.05,depthTest:false,depthWrite:false,toneMapped:false
+    const mat=(color,metalness=0.18,roughness=0.72)=>new THREE.MeshStandardMaterial({
+      color,metalness,roughness,emissive:upgraded?0x102d2b:0x000000,emissiveIntensity:0.2,
+      depthTest:false,depthWrite:false,toneMapped:false
     });
-    const body=makeMat(bodyColor,0.22,0.68),dark=makeMat(0x20272a,0.08,0.9);
-    const grip=makeMat(0x303638,0.02,0.95),metal=makeMat(0x899397,0.62,0.42);
-    const accent=makeMat(upgraded?0x55dce3:0x7e9290,0.3,0.5,upgraded?0x1c8c96:0);
-    const glass=makeMat(0x294a50,0.35,0.2,upgraded?0x14616a:0);
-    const box=(x,y,z,sx,sy,sz,material)=>{
+    const receiver=mat(upgraded?0x405c58:gun.color,0.3,0.72);
+    const polymer=mat(0x252a27,0.04,0.95), grip=mat(0x353b35,0.02,0.98);
+    const steel=mat(0x92958c,0.72,0.46), darkSteel=mat(0x3d4440,0.66,0.58);
+    const accent=mat(upgraded?0x76c8b5:0xa18d68,0.32,0.58), glass=mat(0x344b49,0.5,0.18);
+    const box=(x,y,z,sx,sy,sz,material,rz=0)=>{
       const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);
-      mesh.position.set(x,y,z);mesh.castShadow=false;mesh.receiveShadow=false;
-      mesh.frustumCulled=false;mesh.renderOrder=999;this.model.add(mesh);return mesh;
+      mesh.position.set(x,y,z);mesh.rotation.z=rz;mesh.frustumCulled=false;mesh.renderOrder=999;this.model.add(mesh);return mesh;
     };
-    const pistol=["pistol","revolver"].includes(gun.id);
-    const shotgun=["shotgun","autoShotgun"].includes(gun.id);
-    const launcher=gun.id==="launcher";
-    const long=!pistol;
-    const barrelLength=launcher?0.78:shotgun?0.66:long?0.58:0.36;
-    // One consistent low-poly language: square receiver, straight barrel and clean block details.
-    box(0,0,0.02,pistol?0.2:0.23,0.18,pistol?0.34:0.46,body);
-    box(0,0.105,-0.045,pistol?0.16:0.2,0.045,pistol?0.22:0.3,metal);
-    box(0,0.015,-barrelLength*0.55,pistol?0.075:launcher?0.19:0.085,0.085,barrelLength,launcher?body:metal);
-    box(0,0.02,-barrelLength-0.045,pistol?0.12:0.15,0.12,0.09,dark);
-    box(0,0.14,-0.12,pistol?0.07:0.09,0.035,0.3,dark);
-    box(0,0.17,-0.12,pistol?0.045:0.06,0.025,0.25,accent);
-    // Rear stock and grip.
-    if(!pistol) {
-      box(0,-0.015,0.32,0.18,0.14,0.34,body);
-      box(0,-0.17,0.075,0.13,0.25,0.16,grip);
-      box(0,-0.3,0.075,0.16,0.045,0.18,dark);
-    } else {
-      box(0,-0.16,0.07,0.14,0.25,0.17,grip);
-      box(0,-0.29,0.075,0.16,0.045,0.18,dark);
-    }
-    // Magazine, with distinct silhouettes for box, drum and shotgun feeds.
-    if(!["pistol","revolver","sniper","launcher"].includes(gun.id)) {
-      if(gun.id==="heavySmg") {
-        box(0,-0.19,-0.08,0.24,0.22,0.2,body);
-        box(0,-0.205,-0.19,0.2,0.06,0.035,metal);
+    const cylinder=(x,y,z,radius,length,material,segments=10)=>{
+      const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,length,segments),material);
+      mesh.position.set(x,y,z);mesh.rotation.x=Math.PI/2;mesh.frustumCulled=false;mesh.renderOrder=999;this.model.add(mesh);return mesh;
+    };
+    const pistol=gun.id==="pistol", revolver=gun.id==="revolver";
+    const shotgun=gun.id==="shotgun"||gun.id==="autoShotgun";
+    const smg=gun.id==="smg"||gun.id==="heavySmg";
+    const sniper=gun.id==="sniper", launcher=gun.id==="launcher";
+    const barrel=launcher?0.82:sniper?0.92:shotgun?0.7:smg?0.5:pistol?0.39:0.66;
+
+    if(pistol||revolver) {
+      // Service pistol and heavy revolver have separate frames, barrel lengths and grips.
+      box(0,0.015,0.005,pistol?0.23:0.25,0.19,pistol?0.38:0.42,receiver);
+      box(0,0.125,-0.045,pistol?0.2:0.22,0.055,pistol?0.3:0.32,steel);
+      box(0,0.15,-0.04,0.12,0.035,0.28,darkSteel);
+      cylinder(0,0.025,-barrel*0.62,pistol?0.052:0.062,barrel,steel,12);
+      box(0,0.025,-barrel-0.055,0.12,0.12,0.1,darkSteel);
+      box(0,-0.16,0.075,0.15,0.27,0.18,grip,-0.12);
+      box(0,-0.29,0.11,0.16,0.05,0.19,polymer,-0.12);
+      if(revolver) {
+        cylinder(0,0.005,-0.035,0.115,0.2,steel,12);
+        for(let n=0;n<6;n++){const angle=n*Math.PI/3;cylinder(Math.cos(angle)*0.078,0.005+Math.sin(angle)*0.078,-0.15,0.018,0.025,darkSteel,6);}
+        box(0,0.09,0.17,0.25,0.12,0.28,receiver);
+        box(0,-0.035,-0.11,0.12,0.04,0.13,polymer);
       } else {
-        box(0,-0.19,-0.09,0.15,0.28,0.18,gun.id.includes("Shotgun")||gun.id==="shotgun"?body:dark);
-        box(0,-0.34,-0.09,0.17,0.04,0.19,grip);
+        box(0,-0.12,-0.08,0.105,0.19,0.12,polymer);
+      }
+      const guard=new THREE.Mesh(new THREE.TorusGeometry(0.085,0.012,5,12,Math.PI),darkSteel);
+      guard.position.set(0,-0.105,-0.015);guard.rotation.x=Math.PI/2;guard.renderOrder=999;this.model.add(guard);
+      box(0,0.19,-barrel+0.05,0.045,0.065,0.055,darkSteel);
+    } else {
+      // Receiver, handguard and muzzle are separate pieces rather than one repeated box.
+      box(0,0.015,0.02,0.29,0.22,0.5,receiver);
+      box(0,0.105,-0.12,0.26,0.06,0.32,steel);
+      box(0,0.14,-0.12,0.13,0.035,0.27,darkSteel);
+      cylinder(0,0.035,-barrel*0.58,launcher?0.105:sniper?0.045:0.052,barrel,launcher?receiver:steel,launcher?12:10);
+      box(0,0.04,-barrel+0.04,launcher?0.24:0.13,0.13,0.13,darkSteel);
+      box(0,0.11,-0.32,0.22,0.13,shotgun?0.42:0.36,polymer);
+      if(!smg&&!shotgun&&!launcher) {
+        box(0,-0.005,0.36,0.22,0.16,0.42,polymer);
+        box(0,-0.08,0.48,0.2,0.07,0.2,grip);
+        box(0,-0.18,0.06,0.15,0.28,0.17,grip,-0.12);
+      } else if(smg) {
+        box(0,0.015,0.34,0.22,0.13,0.28,polymer);
+        box(0,-0.17,0.07,0.14,0.25,0.16,grip,-0.1);
+      } else if(shotgun) {
+        box(0,0.015,0.36,0.25,0.17,0.35,polymer);
+        box(0,-0.16,0.09,0.16,0.25,0.18,grip,-0.1);
+        cylinder(0,-0.12,-0.38,0.075,0.48,steel,10);
+        box(0,-0.12,-0.43,0.22,0.13,0.28,grip);
+      } else if(launcher) {
+        cylinder(0,0.04,-0.42,0.16,0.78,receiver,12);
+        box(0,-0.18,0.1,0.24,0.2,0.22,grip,-0.1);
+        box(0,0.2,-0.1,0.16,0.1,0.28,steel);
+      }
+      if(!launcher) {
+        if(gun.id==="heavySmg") {
+          cylinder(0,-0.19,-0.12,0.16,0.2,polymer,12);
+          box(0,-0.29,-0.12,0.24,0.045,0.2,darkSteel);
+        } else if(shotgun) cylinder(0,-0.13,-0.12,0.075,0.45,darkSteel,10);
+        else {
+          box(0,-0.19,-0.12,0.17,0.3,0.2,polymer,0.08);
+          box(0,-0.34,-0.12,0.18,0.045,0.2,darkSteel);
+        }
+      }
+      if(sniper) {
+        cylinder(0,0.27,-0.1,0.065,0.34,polymer,10);
+        cylinder(0,0.27,-0.1,0.043,0.35,glass,10);
+        box(0,0.27,-0.1,0.24,0.045,0.07,darkSteel);
+      } else if(["rifle","burst","tactical","experimental"].includes(gun.id)) {
+        box(0,0.22,-0.1,0.16,0.1,0.27,polymer);
+        box(0,0.29,-0.1,0.2,0.045,0.32,steel);
+        box(0,0.23,-0.22,0.08,0.07,0.09,glass);
+      }
+      if(gun.id==="experimental") {
+        box(0,0.02,-0.4,0.26,0.23,0.32,accent);
+        box(0,0.02,-0.4,0.15,0.13,0.34,glass);
+      }
+      if(gun.id==="burst") box(0.13,0.02,-0.18,0.06,0.08,0.2,accent);
+      if(launcher) {
+        box(0,0.02,-0.45,0.36,0.3,0.88,receiver);
+        box(0,0.2,-0.48,0.22,0.08,0.35,steel);
       }
     }
-    if(shotgun) {
-      box(0,-0.12,-0.36,0.18,0.14,0.32,gun.id==="autoShotgun"?body:grip);
-      box(0,-0.12,-0.51,0.2,0.07,0.08,accent);
-    }
-    if(["rifle","burst","tactical","sniper","experimental"].includes(gun.id)) {
-      box(0,0.23,-0.1,0.14,0.12,0.25,dark);
-      box(0,0.29,-0.1,0.18,0.04,0.3,accent);
-      box(0,0.235,-0.22,0.075,0.07,0.08,glass);
-    }
-    if(gun.id==="revolver") {
-      box(0,-0.015,0.15,0.2,0.16,0.18,metal);
-      box(0,-0.015,0.25,0.16,0.13,0.08,dark);
-    }
-    if(launcher) {
-      box(0,0,-0.12,0.28,0.25,0.72,body);
-      box(0,0,-0.52,0.34,0.31,0.1,accent);
-      box(0,-0.2,0.12,0.22,0.2,0.22,grip);
-    }
-    if(gun.id==="experimental") {
-      box(0,0.015,-0.38,0.23,0.2,0.32,accent);
-      box(0,0.015,-0.4,0.14,0.12,0.34,glass);
-    }
-    // Blocky sleeve and glove keep the first-person silhouette grounded.
-    const sleeve=makeMat(0x48565b),glove=makeMat(0x242b2d);
-    box(-0.16,-0.28,0.25,0.22,0.2,0.34,sleeve);
-    box(-0.055,-0.2,0.02,0.15,0.1,0.18,glove);
-    box(-0.055,-0.16,-0.055,0.16,0.07,0.13,glove);
-    this.muzzle=box(0,0.02,-barrelLength-0.1,0.12,0.12,0.07,makeMat(0xffc27a,0,0.4,0xff963d));
+
+    // Sleeve and glove sit below the receiver so the weapon remains readable.
+    const sleeve=mat(0x4a514a,0.02,0.98),glove=mat(0x222724,0.02,0.98);
+    box(-0.19,-0.29,0.27,0.24,0.22,0.38,sleeve);
+    box(-0.06,-0.2,0.015,0.16,0.11,0.19,glove);
+    box(-0.055,-0.16,-0.065,0.17,0.075,0.14,glove);
+    this.muzzle=box(0,0.035,-barrel-0.1,0.1,0.1,0.075,mat(0xffc27a,0,0.4));
     this.muzzle.visible=false;
-    this.muzzleLight=new THREE.PointLight(upgraded?0x54eaff:0xffb35e,0,1.7);
-    this.muzzleLight.position.set(0,0.02,-barrelLength-0.14);
+    this.muzzleLight=new THREE.PointLight(upgraded?0x9ad8c9:0xffb35e,0,1.5);
+    this.muzzleLight.position.set(0,0.035,-barrel-0.14);
     this.model.add(this.muzzleLight);
   }
   notify() { this.onAmmoChange?.(this.hud()); }
