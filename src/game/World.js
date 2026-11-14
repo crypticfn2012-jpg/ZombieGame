@@ -51,7 +51,7 @@ export class FacilityWorld {
   }
 
   mat(color, roughness=0.8, metalness=0.1, emissive=0x000000) {
-    return new THREE.MeshStandardMaterial({ color, roughness, metalness, emissive, emissiveIntensity: emissive ? 0.6 : 0 });
+    return new THREE.MeshToonMaterial({ color, emissive, emissiveIntensity: emissive ? 0.45 : 0 });
   }
 
   box(parent, x, y, z, sx, sy, sz, material, extra={}) {
@@ -74,13 +74,13 @@ export class FacilityWorld {
     this.scene.add(hemi);
     const key = new THREE.DirectionalLight(0xa8cbd0, 1.6);
     key.position.set(-24, 34, 18);
-    key.castShadow = true;
-    key.shadow.mapSize.set(2048,2048);
+    key.castShadow = false;
+    key.shadow.mapSize.set(512,512);
     key.shadow.camera.left = -70; key.shadow.camera.right = 70;
     key.shadow.camera.top = 30; key.shadow.camera.bottom = -75;
     key.shadow.bias = -0.00035;
     this.scene.add(key);
-    const fill = new THREE.PointLight(0x3acbd0, 16, 58, 2);
+    const fill = new THREE.PointLight(0x3acbd0, 7, 42, 2);
     fill.position.set(0, 4, -22);
     this.scene.add(fill);
     for (const room of ROOM_DATA) this.buildRoom(room);
@@ -127,7 +127,7 @@ export class FacilityWorld {
       this.box(group,i,4.7,-8.6,0.18,0.25,0.4,this.materials.metal,{castShadow:false});
       this.box(group,i,4.7,8.6,0.18,0.25,0.4,this.materials.metal,{castShadow:false});
     }
-    const light = new THREE.PointLight(room.color, room.id==="start" ? 17 : 11, 17, 2);
+    const light = new THREE.PointLight(room.color, room.id==="start" ? 8 : 4, 14, 2);
     light.position.set(0,3.6,0);
     group.add(light);
     const lamp = this.box(group,0,4.45,0,2.5,0.12,0.7,this.mat(0xb7d0c5,0.3,0.05,room.color),{castShadow:false});
@@ -255,7 +255,7 @@ export class FacilityWorld {
 
   addProp(roomId, x,z, sx,sy,sz,color, options={}) {
     const room=this.rooms.get(roomId);
-    const material=typeof color==="number" ? new THREE.MeshStandardMaterial({color,roughness:0.78,metalness:0.12}) : color;
+    const material=typeof color==="number" ? new THREE.MeshToonMaterial({color}) : color;
     const mesh=this.box(this.scene,room.x+x,sy/2,room.z+z,sx,sy,sz,material);
     if(options.collider!==false) this.addCollider(room.x+x,room.z+z,sx+0.25,sz+0.25);
     return mesh;
@@ -294,8 +294,8 @@ export class FacilityWorld {
     const group=new THREE.Group();
     group.position.set(room.x+x,0,room.z+z);
     this.scene.add(group);
-    const base=new THREE.MeshStandardMaterial({color:0x17252b,roughness:0.35,metalness:0.6});
-    const shell=new THREE.MeshStandardMaterial({color,roughness:0.3,metalness:0.32,emissive:color,emissiveIntensity:0.16});
+    const base=new THREE.MeshToonMaterial({color:0x17252b});
+    const shell=new THREE.MeshToonMaterial({color,emissive:color,emissiveIntensity:0.12});
     this.box(group,0,0.8,0,1.35,1.6,1.0,base);
     this.box(group,0,1.72,0,1.15,0.3,0.9,shell);
     this.box(group,0,1.1,0.51,0.72,0.64,0.08,shell);
