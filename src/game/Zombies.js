@@ -381,7 +381,8 @@ export class ZombieDirector {
 
   blocked(x,z,world,radius=0.4) {
     for(const c of world.colliders) {
-      if(Math.abs(x-c.x)<c.sx/2+radius && Math.abs(z-c.z)<c.sz/2+radius) return true;
+      if(c.kind==="window")continue;
+      if(Math.abs(x-c.x)<c.sx/2+radius&&Math.abs(z-c.z)<c.sz/2+radius)return true;
     }
     return false;
   }
