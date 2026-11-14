@@ -662,22 +662,77 @@ export class FacilityWorld {
     this.scene.add(group);
     const base=new THREE.MeshToonMaterial({color:0x17252b,gradientMap:toonRamp});
     const shell=new THREE.MeshToonMaterial({color,gradientMap:toonRamp,emissive:color,emissiveIntensity:0.12});
+    const metal=this.mat(0x56615d,0.72,0.42), dark=this.mat(0x172126,0.45,0.62);
+    const glow=this.mat(color,0.3,0.35,color);
+    const addBox=(x,y,z,sx,sy,sz,material)=>this.box(group,x,y,z,sx,sy,sz,material);
+    const addCylinder=(x,y,z,radius,height,material,segments=12)=>{
+      const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,height,segments),material);
+      mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return mesh;
+    };
     if(type==="wallbuy") {
-      this.box(group,0,1.7,0,2.9,2.35,0.22,this.materials.wood,{castShadow:false});
-      this.box(group,0,1.7,0.13,2.65,2.12,0.06,this.materials.darkWall,{castShadow:false});
+      addBox(0,1.7,0,2.9,2.35,0.22,this.materials.wood);
+      addBox(0,1.7,0.13,2.65,2.12,0.06,this.materials.darkWall);
+    } else if(type==="perk") {
+      addBox(0,0.16,0,1.18,0.28,0.92,dark);
+      addCylinder(0,1.02,0,0.52,1.62,shell,12);
+      addCylinder(0,1.86,0,0.57,0.16,metal,12);
+      addCylinder(0,1.94,0,0.48,0.12,glow,12);
+      addBox(0,1.1,0.49,0.66,0.56,0.09,dark);
+      addBox(0,1.1,0.55,0.52,0.39,0.035,glow);
+      addBox(0,0.52,0.53,0.32,0.14,0.22,metal);
+      addBox(0,0.4,0.62,0.18,0.12,0.16,glow);
+      addBox(-0.42,0.82,0.25,0.08,0.5,0.08,metal);
+      addBox(0.42,0.82,0.25,0.08,0.5,0.08,metal);
+      addBox(0,0.22,0.48,0.72,0.07,0.06,glow);
+    } else if(type==="pap") {
+      addBox(0,0.48,0,1.95,0.78,1.5,dark);
+      addBox(0,0.91,0,1.72,0.12,1.3,metal);
+      addBox(0,1.16,-0.12,1.42,0.48,0.95,base);
+      addBox(0,1.17,0.39,1.12,0.3,0.08,glow);
+      addBox(0,1.48,-0.12,1.12,0.1,0.78,metal);
+      for(const x of [-0.72,0.72]){
+        addBox(x,1.2,-0.12,0.12,0.82,0.92,shell);
+        addBox(x,1.68,-0.12,0.2,0.12,1.02,glow);
+      }
+      addCylinder(0,1.48,-0.12,0.31,0.12,glow,10);
+      addBox(0,0.99,0.72,0.8,0.09,0.1,glow);
+      for(const x of [-0.65,0.65]) addBox(x,0.12,0.48,0.18,0.22,0.18,metal);
+    } else if(type==="mystery") {
+      addBox(0,0.65,0,1.65,0.92,1.15,this.materials.wood);
+      addBox(0,1.15,-0.02,1.72,0.2,1.22,metal);
+      addBox(0,1.27,-0.02,1.56,0.08,1.08,shell);
+      addBox(0,0.68,0.59,0.42,0.4,0.08,glow);
+      for(const x of [-0.78,0.78]) for(const z of [-0.5,0.5]) addBox(x,0.67,z,0.12,1.0,0.12,metal);
+      addBox(0,0.19,0,1.8,0.16,1.28,dark);
+    } else if(type==="power") {
+      addBox(0,1.0,0,1.5,1.9,0.72,base);
+      addBox(0,1.0,0.39,1.25,1.55,0.08,metal);
+      addBox(0,1.42,0.46,0.78,0.42,0.06,dark);
+      addBox(0,1.42,0.51,0.58,0.22,0.035,glow);
+      addBox(0.48,0.75,0.49,0.12,0.54,0.12,shell);
+      addCylinder(0.48,0.49,0.55,0.09,0.18,metal,8);
+      addBox(0.48,0.29,0.62,0.13,0.34,0.13,glow);
+      for(const x of [-0.48,-0.24,0,0.24]) addBox(x,1.84,0.4,0.1,0.12,0.08,shell);
+    } else if(type==="terminal" || type==="document") {
+      addBox(0,0.68,0,1.12,1.3,0.72,base);
+      addBox(0,1.48,0.15,1.0,0.56,0.12,metal);
+      addBox(0,1.49,0.225,0.84,0.4,0.035,glow);
+      addBox(0,0.98,0.42,0.88,0.12,0.08,shell);
+      addBox(0,0.82,0.42,0.62,0.06,0.08,metal);
+      addBox(0,0.12,0,1.35,0.18,0.92,dark);
     } else {
-      this.box(group,0,0.8,0,1.35,1.6,1.0,base);
-      this.box(group,0,1.72,0,1.15,0.3,0.9,shell);
-      this.box(group,0,1.1,0.51,0.72,0.64,0.08,shell);
-      this.box(group,0,0.35,0.51,0.42,0.12,0.08,this.materials.amber);
-      this.box(group,-0.58,1.1,0.52,0.08,0.72,0.06,this.materials.amber,{castShadow:false});
-      this.box(group,0.58,1.1,0.52,0.08,0.72,0.06,this.materials.amber,{castShadow:false});
+      addBox(0,0.8,0,1.35,1.6,1.0,base);
+      addBox(0,1.72,0,1.15,0.3,0.9,shell);
+      addBox(0,1.1,0.51,0.72,0.64,0.08,glow);
     }
     let light=null,rotor=null;
     if(type!=="wallbuy") {
       light=new THREE.PointLight(color,1.2,4.5);
       light.position.set(0,2,0);group.add(light);
-      rotor=this.box(group,0,2.05,0,0.26,0.08,0.26,this.materials.cyan,{castShadow:false});
+      if(type==="perk" || type==="pap" || type==="mystery"){
+        rotor=new THREE.Mesh(new THREE.TorusGeometry(type==="pap"?0.43:0.3,0.045,6,16),glow);
+        rotor.rotation.x=Math.PI/2;rotor.position.set(0,type==="pap"?1.55:1.96,0);group.add(rotor);
+      }
     }
     const obj={id,type,name,price:cost,description,position:new THREE.Vector3(room.x+x,1.3,room.z+z),mesh:group,rotor,roomId,active:false,light};
     this.interactables.push(obj);
