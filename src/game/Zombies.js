@@ -30,99 +30,77 @@ export class ZombieDirector {
   }
 
   makeZombie(type) {
-    const data=TYPES[type] || TYPES.standard;
+    const data=TYPES[type]||TYPES.standard;
     const group=new THREE.Group();
     group.scale.setScalar(data.scale);
-    const mat=(color,rough=0.82,metal=0.02,emissive=0)=>new THREE.MeshToonMaterial({color,gradientMap:toonRamp,emissive,emissiveIntensity:emissive?0.65:0});
-    const skin=mat(data.color), skinLight=mat(new THREE.Color(data.color).multiplyScalar(1.22)), dark=mat(0x26332f);
-    const cloth=mat(type==="armored"?0x303c45:type==="runner"?0x51403a:0x39443f);
-    const torn=mat(type==="armored"?0x53616a:0x59604f), eye=mat(0xff493e,0.25,0,0x9d1b16);
-    const bone=mat(0xb8b49a), metal=mat(data.boss?0x625365:0x77838a,0.42,0.55);
-    const add=(parent,geometry,material,pos,rot=null)=>{
-      const mesh=new THREE.Mesh(geometry,material);
-      mesh.position.copy(pos);
-      if(rot) mesh.rotation.set(rot.x,rot.y,rot.z);
-      mesh.castShadow=false; mesh.receiveShadow=false;
-      parent.add(mesh); return mesh;
+    const mat=color=>new THREE.MeshToonMaterial({color,gradientMap:toonRamp});
+    const skin=mat(data.color), cloth=mat(type==="armored"?0x35434a:type==="runner"?0x57453b:0x465149);
+    const dark=mat(0x202b2b), pants=mat(0x303b3d), accent=mat(type==="explosive"?0xe58b43:data.boss?0x8c667f:0x758d83);
+    const eye=mat(0xe95d4f), bone=mat(0xc9c2a9), armour=mat(0x59666b);
+    const box=(parent,x,y,z,sx,sy,sz,material)=>{
+      const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);
+      mesh.position.set(x,y,z);mesh.castShadow=false;mesh.receiveShadow=false;parent.add(mesh);return mesh;
     };
-    const box=(parent,pos,size,material,rot=null)=>add(parent,new THREE.BoxGeometry(...size),material,new THREE.Vector3(...pos),rot);
-    const ball=(parent,pos,scale,material)=>{const m=add(parent,new THREE.SphereGeometry(1,12,10),material,new THREE.Vector3(...pos));m.scale.set(...scale);return m;};
-    const capsule=(parent,pos,radius,length,material,rot=null)=>add(parent,new THREE.CapsuleGeometry(radius,length,3,7),material,new THREE.Vector3(...pos),rot);
-    // Heavy, hunched torso with layered torn clothing and exposed infected tissue.
-    const torso=new THREE.Group(); torso.position.set(0,1.12,0); group.add(torso);
-    add(torso,new THREE.CylinderGeometry(0.28,0.37,0.82,9),cloth,new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,0));
-    ball(torso,[0,0.2,0.015],[0.37,0.31,0.24],cloth);
-    box(torso,[-0.12,-0.05,0.205],[0.16,0.38,0.045],torn,{x:0.08,y:0,z:0.08});
-    box(torso,[0.13,-0.17,0.21],[0.12,0.23,0.05],dark,{x:-0.1,y:0,z:-0.12});
-    // Neck and a large, slightly forward-lolling head.
-    const head=new THREE.Group(); head.position.set(0,0.55,0.015); torso.add(head);
-    capsule(head,[0,0.03,0],0.13,0.15,skin);
-    ball(head,[0,0.27,0.025],[0.255,0.29,0.235],skin);
-    ball(head,[0,0.08,0.16],[0.18,0.105,0.13],skinLight);
-    ball(head,[0,0.0,0.19],[0.15,0.065,0.08],dark);
-    // Deep eye sockets, glowing pupils and broken teeth face the player (+Z).
-    ball(head,[-0.105,0.29,0.224],[0.07,0.075,0.035],dark);
-    ball(head,[0.105,0.29,0.224],[0.07,0.075,0.035],dark);
-    ball(head,[-0.105,0.29,0.253],[0.035,0.04,0.018],eye);
-    ball(head,[0.105,0.29,0.253],[0.035,0.04,0.018],eye);
-    for(let i=0;i<3;i++) box(head,[-0.075+i*0.07,0.035,0.255],[0.035,0.045,0.025],bone);
-    // Ragged scalp and ear details.
-    ball(head,[0,-0.005,-0.015],[0.23,0.12,0.22],dark);
-    ball(head,[-0.26,0.22,0.02],[0.07,0.1,0.08],skin);
-    ball(head,[0.26,0.22,0.02],[0.07,0.1,0.08],skin);
-    // Shoulder pivots and articulated forearms let the arms drag and lunge.
-    const armL=new THREE.Group(); armL.position.set(-0.4,1.43,0); group.add(armL);
-    const armR=new THREE.Group(); armR.position.set(0.4,1.43,0); group.add(armR);
-    for(const [arm,side] of [[armL,-1],[armR,1]]) {
-      ball(arm,[0,-0.08,0],[0.17,0.19,0.17],cloth);
-      capsule(arm,[0,-0.34,0],0.105,0.43,skin);
-      const elbow=new THREE.Group(); elbow.position.set(0,-0.58,0); arm.add(elbow);
-      capsule(elbow,[0,-0.22,0],0.085,0.32,skinLight);
-      ball(elbow,[0,-0.43,0.045],[0.1,0.12,0.12],skin);
-      for(let f=0;f<3;f++) capsule(elbow,[(f-1)*0.055,-0.52,0.085],0.025,0.12,dark);
+    // Chunky, readable voxel silhouette. Every part uses the same crisp block scale.
+    const torso=new THREE.Group();torso.position.set(0,1.16,0);group.add(torso);
+    box(torso,0,0,0,0.66,0.78,0.34,cloth);
+    box(torso,0,-0.27,0.19,0.42,0.18,0.045,accent);
+    box(torso,-0.22,0.17,0.19,0.12,0.3,0.05,skin);
+    box(torso,0.2,-0.06,-0.19,0.14,0.32,0.05,dark);
+    const head=new THREE.Group();head.position.set(0,0.55,0.02);torso.add(head);
+    box(head,0,0.15,0,0.48,0.48,0.42,skin);
+    box(head,0,0.37,-0.01,0.43,0.12,0.4,dark);
+    box(head,-0.12,0.19,0.216,0.09,0.07,0.025,eye);
+    box(head,0.12,0.19,0.216,0.09,0.07,0.025,eye);
+    box(head,0,0.035,0.225,0.2,0.07,0.035,dark);
+    for(let i=0;i<3;i++) box(head,-0.07+i*0.07,0.025,0.25,0.035,0.045,0.025,bone);
+    box(head,-0.29,0.12,0,0.08,0.18,0.13,skin);
+    box(head,0.29,0.12,0,0.08,0.18,0.13,skin);
+    const armL=new THREE.Group();armL.position.set(-0.39,0.35,0);torso.add(armL);
+    const armR=new THREE.Group();armR.position.set(0.39,0.35,0);torso.add(armR);
+    for(const arm of [armL,armR]) {
+      box(arm,0,-0.2,0,0.2,0.43,0.22,skin);
+      const elbow=new THREE.Group();elbow.position.set(0,-0.42,0);arm.add(elbow);
+      box(elbow,0,-0.19,0,0.17,0.4,0.19,skin);
+      box(elbow,0,-0.4,0.09,0.2,0.12,0.2,dark);
       arm.userData.elbow=elbow;
     }
-    // Hip and knee pivots create a limp, uneven gait rather than rigid swinging blocks.
-    const legL=new THREE.Group(); legL.position.set(-0.19,0.73,0); group.add(legL);
-    const legR=new THREE.Group(); legR.position.set(0.19,0.73,0); group.add(legR);
-    for(const [leg,side] of [[legL,-1],[legR,1]]) {
-      capsule(leg,[0,-0.23,0],0.12,0.38,dark);
-      const knee=new THREE.Group(); knee.position.set(0,-0.48,0); leg.add(knee);
-      capsule(knee,[0,-0.2,0],0.095,0.34,cloth);
-      ball(knee,[0,-0.39,0.08],[0.13,0.085,0.22],dark);
-      box(knee,[0,-0.39,0.19],[0.16,0.07,0.1],torn);
+    const legL=new THREE.Group();legL.position.set(-0.18,0.76,0);group.add(legL);
+    const legR=new THREE.Group();legR.position.set(0.18,0.76,0);group.add(legR);
+    for(const leg of [legL,legR]) {
+      box(leg,0,-0.2,0,0.23,0.42,0.25,pants);
+      const knee=new THREE.Group();knee.position.set(0,-0.4,0);leg.add(knee);
+      box(knee,0,-0.19,0,0.21,0.4,0.23,skin);
+      box(knee,0,-0.37,0.11,0.27,0.12,0.36,dark);
       leg.userData.knee=knee;
     }
-    // Asymmetric shoulder plates, straps and faction-specific silhouettes.
     if(type==="armored"||data.boss) {
-      box(torso,[0,0.28,0.02],[0.76,0.2,0.48],metal);
-      box(torso,[-0.39,0.18,0.02],[0.27,0.28,0.35],metal);
-      box(torso,[0.39,0.18,0.02],[0.27,0.28,0.35],metal);
-      box(torso,[0,0.02,0.25],[0.12,0.48,0.045],dark,{x:0.1,y:0,z:0.04});
+      box(torso,0,0.25,0.02,0.78,0.2,0.48,armour);
+      box(torso,-0.39,0.2,0,0.24,0.26,0.34,armour);
+      box(torso,0.39,0.2,0,0.24,0.26,0.34,armour);
+      box(head,0,0.43,0,0.55,0.12,0.48,accent);
     }
     if(type==="explosive") {
-      ball(torso,[0,-0.02,0.27],[0.2,0.23,0.12],mat(0xe87939,0.35,0,0xc84b17));
-      for(let i=0;i<3;i++) ball(torso,[(i-1)*0.11,-0.02,0.37],[0.035,0.035,0.025],eye);
+      box(torso,0,-0.02,0.22,0.26,0.26,0.12,accent);
+      box(torso,0,-0.02,0.29,0.1,0.1,0.04,eye);
     }
     if(data.boss) {
-      ball(head,[0,0.55,-0.01],[0.32,0.12,0.3],metal);
-      box(head,[-0.27,0.4,-0.02],[0.12,0.45,0.13],dark,{x:0.1,y:0,z:-0.2});
-      box(head,[0.27,0.4,-0.02],[0.12,0.45,0.13],dark,{x:-0.1,y:0,z:0.2});
-      box(torso,[0,-0.3,-0.23],[0.22,0.36,0.1],metal);
+      box(head,-0.24,0.42,-0.02,0.13,0.38,0.15,dark);
+      box(head,0.24,0.42,-0.02,0.13,0.38,0.15,dark);
+      group.scale.multiplyScalar(1.05);
     }
     const flashMaterials=[];
-    const seenMaterials=new Set();
+    const seen=new Set();
     group.traverse(child=>{
-      if(!child.isMesh) return;
-      const list=Array.isArray(child.material)?child.material:[child.material];
-      for(const material of list) if(material&&!seenMaterials.has(material)) {
-        seenMaterials.add(material);
-        flashMaterials.push({material,color:material.color?.clone(),emissive:material.emissive?.clone(),emissiveIntensity:material.emissiveIntensity||0});
-      }
+      if(!child.isMesh)return;
+      const material=child.material;
+      if(!seen.has(material)){seen.add(material);flashMaterials.push({material,color:material.color.clone(),emissive:material.emissive.clone(),emissiveIntensity:material.emissiveIntensity||0});}
     });
-    return {group,type,data,hp:data.health,maxHp:data.health,armL,armR,legL,legR,head,torso,flashMaterials,attackTimer:0,specialTimer:1.4,chargeTime:0,chargeDirection:new THREE.Vector3(),phase:Math.random()*Math.PI*2,dead:false,roomId:"start",hurt:0,walkBlend:0};
+    return {group,type,data,hp:data.health,maxHp:data.health,armL,armR,legL,legR,head,torso,flashMaterials,
+      attackTimer:0,specialTimer:1.4,chargeTime:0,chargeDirection:new THREE.Vector3(),phase:Math.random()*Math.PI*2,
+      dead:false,roomId:"start",hurt:0,walkBlend:0,entryWindow:null,entryState:"",entryProgress:0,entryStart:null};
   }
-  spawn(type, position, roomId, round=1) {
+  spawn(type, position, roomId, round=1, entryWindow=null) {
     if(this.zombies.length>=this.maxAlive) return null;
     const zombie=this.makeZombie(type);
     const scaleHealth=type==="brute"||type==="experiment"||type==="overseer"?1:1+Math.max(0,round-1)*0.16;
@@ -130,6 +108,8 @@ export class ZombieDirector {
     zombie.hp=zombie.maxHp;
     zombie.group.position.set(position.x,0,position.z);
     zombie.roomId=roomId;
+    zombie.entryWindow=entryWindow;
+    zombie.entryState=entryWindow?"approach":"";
     this.scene.add(zombie.group);
     this.zombies.push(zombie);
     if(zombie.data.boss) this.onBossChange?.(zombie);
@@ -234,42 +214,46 @@ export class ZombieDirector {
       }
       const zpos=zombie.group.position;
       let targetX=targetPos.x,targetZ=targetPos.z;
-      if(zombie.roomId!==playerRoom) {
-        const route=world.route(zombie.roomId,playerRoom);
-        if(route && route.length) {
-          const portal=world.portalFor(route[0],zombie.roomId);
-          targetX=portal.x; targetZ=portal.z;
-          if(Math.hypot(zpos.x-portal.x,zpos.z-portal.z)<1.55) zombie.roomId=portal.toRoom;
-        } else {
-          const room=world.rooms.get(zombie.roomId);
-          if(room) {targetX=room.x; targetZ=room.z;}
+      if(zombie.entryWindow&&zombie.entryState==="approach") {
+        targetX=zombie.entryWindow.approach.x;targetZ=zombie.entryWindow.approach.z;
+        const dx=targetX-zpos.x,dz=targetZ-zpos.z,dist=Math.hypot(dx,dz);
+        if(dist>0.35) {zpos.x+=dx/dist*Math.min(dist,zombie.data.speed*dt);zpos.z+=dz/dist*Math.min(dist,zombie.data.speed*dt);}
+        else {zombie.entryState="climb";zombie.entryProgress=0;zombie.entryStart=zpos.clone();}
+      } else if(zombie.entryWindow&&zombie.entryState==="climb") {
+        zombie.entryProgress=Math.min(1,zombie.entryProgress+dt/1.25);
+        const t=zombie.entryProgress,ease=t*t*(3-2*t),win=zombie.entryWindow;
+        zpos.x=THREE.MathUtils.lerp(zombie.entryStart.x,win.inside.x,ease);
+        zpos.z=THREE.MathUtils.lerp(zombie.entryStart.z,win.inside.z,ease);
+        zombie.group.position.y=Math.sin(t*Math.PI)*0.82;
+        if(t>=1) {zombie.roomId=win.roomId;zombie.entryWindow=null;zombie.entryState="";zombie.group.position.y=0;}
+      } else {
+        if(zombie.roomId!==playerRoom) {
+          const route=world.route(zombie.roomId,playerRoom);
+          if(route&&route.length) {
+            const portal=world.portalFor(route[0],zombie.roomId);
+            targetX=portal.x;targetZ=portal.z;
+            if(Math.hypot(zpos.x-portal.x,zpos.z-portal.z)<1.55) zombie.roomId=portal.toRoom;
+          } else {
+            const room=world.rooms.get(zombie.roomId);
+            if(room){targetX=room.x;targetZ=room.z;}
+          }
         }
-      }
-      const dx=targetX-zpos.x,dz=targetZ-zpos.z;
-      const dist=Math.sqrt(dx*dx+dz*dz);
-      const delta=new THREE.Vector3(dx,0,dz);
-      if(dist>0.12) {
-        delta.normalize();
-        const speed=zombie.data.speed*(zombie.data.boss?1:1+Math.min(0.36,(round-1)*0.012));
-        let moveDir=delta;
-        let step=speed*dt;
-        if(zombie.chargeTime>0) {
-          moveDir=zombie.chargeDirection;
-          step=7.6*dt;
-          zombie.chargeTime=Math.max(0,zombie.chargeTime-dt);
+        const dx=targetX-zpos.x,dz=targetZ-zpos.z,dist=Math.hypot(dx,dz);
+        const delta=new THREE.Vector3(dx,0,dz);
+        if(dist>0.12) {
+          delta.normalize();
+          const speed=zombie.data.speed*(zombie.data.boss?1:1+Math.min(0.36,(round-1)*0.012));
+          let moveDir=delta,step=speed*dt;
+          if(zombie.chargeTime>0){moveDir=zombie.chargeDirection;step=7.6*dt;zombie.chargeTime=Math.max(0,zombie.chargeTime-dt);}
+          let nx=zpos.x+moveDir.x*step,nz=zpos.z+moveDir.z*step;
+          if(this.blocked(nx,nz,world,0.42*zombie.data.scale)) {
+            const left=new THREE.Vector3(-delta.z,0,delta.x);
+            const candidates=[{x:zpos.x+left.x*step,z:zpos.z+left.z*step},{x:zpos.x-left.x*step,z:zpos.z-left.z*step}];
+            const chosen=candidates.find(p=>!this.blocked(p.x,p.z,world,0.42*zombie.data.scale));
+            if(chosen){nx=chosen.x;nz=chosen.z;}else{nx=zpos.x;nz=zpos.z;}
+          }
+          zpos.x=nx;zpos.z=nz;
         }
-        let nx=zpos.x+moveDir.x*step, nz=zpos.z+moveDir.z*step;
-        if(this.blocked(nx,nz,world,0.42*zombie.data.scale)) {
-          const left=new THREE.Vector3(-delta.z,0,delta.x);
-          const candidates=[
-            {x:zpos.x+left.x*step,z:zpos.z+left.z*step},
-            {x:zpos.x-left.x*step,z:zpos.z-left.z*step}
-          ];
-          const chosen=candidates.find(p=>!this.blocked(p.x,p.z,world,0.42*zombie.data.scale));
-          if(chosen) {nx=chosen.x;nz=chosen.z;}
-          else {nx=zpos.x;nz=zpos.z;}
-        }
-        zpos.x=nx; zpos.z=nz;
       }
       const time=this.clock+zombie.phase;
       const moving=dist>0.12;
@@ -296,7 +280,7 @@ export class ZombieDirector {
       zombie.torso.rotation.z=Math.sin(time*2.2)*0.035+stride*0.045;
       zombie.head.rotation.x=0.08+Math.sin(time*2.6)*0.055;
       zombie.head.rotation.z=Math.sin(time*1.8+zombie.phase)*0.09;
-      zombie.group.position.y=lift*0.045+Math.abs(Math.sin(time*2.1))*0.012;
+      if(zombie.entryState!=="climb") zombie.group.position.y=lift*0.045+Math.abs(Math.sin(time*2.1))*0.012;
       zombie.group.rotation.z=Math.sin(time*2.8+zombie.phase)*0.025;
       zombie.group.lookAt(targetPos.x,0,targetPos.z);
       const realDist=Math.hypot(targetPos.x-zpos.x,targetPos.z-zpos.z);
