@@ -176,9 +176,10 @@ export class GameUI {
     document.getElementById("boss-health-fill").style.width=Math.max(0,zombie.hp/zombie.maxHp*100)+"%";
   }
 
-  hitMarker() {
+  hitMarker(headshot=false) {
     const node=document.getElementById("hit-marker");
-    node.classList.remove("hit");
+    node.classList.remove("hit","headshot");
+    if(headshot) node.classList.add("headshot");
     void node.offsetWidth;
     node.classList.add("hit");
   }
