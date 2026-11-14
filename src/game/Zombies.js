@@ -255,6 +255,7 @@ export class ZombieDirector {
           zpos.x=nx;zpos.z=nz;
         }
       }
+      const dist=Math.hypot(targetPos.x-zpos.x,targetPos.z-zpos.z);
       const time=this.clock+zombie.phase;
       const moving=dist>0.12;
       const gaitSpeed=zombie.type==="runner"?8.8:zombie.data.boss?4.2:5.8;
@@ -276,6 +277,12 @@ export class ZombieDirector {
       zombie.armR.rotation.z=-0.1+Math.sin(time*1.5+1)*0.08;
       zombie.armL.userData.elbow.rotation.x=-0.25+Math.max(0,stride)*0.42;
       zombie.armR.userData.elbow.rotation.x=-0.38+Math.max(0,-stride)*0.35;
+      if(zombie.entryState==="climb") {
+        zombie.armL.rotation.x=-1.45;zombie.armR.rotation.x=-1.6;
+        zombie.armL.userData.elbow.rotation.x=-0.75;zombie.armR.userData.elbow.rotation.x=-0.85;
+        zombie.legL.rotation.x=0.8;zombie.legR.rotation.x=-0.55;
+        zombie.torso.rotation.x=-0.28;
+      }
       zombie.torso.rotation.x=-0.12-zombie.walkBlend*0.09+(zombie.data.boss?-0.08:0);
       zombie.torso.rotation.z=Math.sin(time*2.2)*0.035+stride*0.045;
       zombie.head.rotation.x=0.08+Math.sin(time*2.6)*0.055;
