@@ -171,8 +171,8 @@ export class BlacksiteGame {
     this.state="playing";
     this.player.setActive(true);
     this.ui.showGame();
-    this.ui.setObjective("SURVIVE AND FIND THE POWER RELAY");
-    this.ui.setRound(1,"PREPARING");
+    this.ui.setObjective("HOLD THE CHECKPOINT. OPEN THE FACILITY TO EXPAND.");
+    this.ui.setRound(1,"FIRST WAVE INCOMING");
     this.ui.setPoints(this.progression.points);
     this.ui.setHealth(this.player.health,this.player.maxHealth);
     this.ui.setAmmo(this.weapons.hud());
@@ -185,13 +185,13 @@ export class BlacksiteGame {
   startRound() {
     this.round++;
     this.roundKills=0;
-    this.spawnsRemaining=Math.min(8+this.round*3,44);
+    this.spawnsRemaining=Math.min(6+this.round*3,42);
     this.spawnTimer=0.75;
     this.bossSpawned=false;
     this.waveBreak=0;
     this.audio.play("round");
     this.ui.setRound(this.round,"INCOMING");
-    this.ui.notify("ROUND "+String(this.round).padStart(2,"0"),"Hostile activity increasing.");
+    this.ui.notify("ROUND "+String(this.round).padStart(2,"0"),"Hostiles are gathering outside. Watch the windows.");
     if(this.round%5===0) {
       const bossType=this.round>=15?"overseer":this.round>=10?"experiment":"brute";
       this.spawnBoss(bossType);
@@ -200,32 +200,29 @@ export class BlacksiteGame {
 
   spawnBoss(type) {
     const open=this.world.openRoomIds();
-    const roomId=open.includes("arena")?"arena":open[open.length-1]||"start";
-    const room=this.world.rooms.get(roomId);
-    const point={x:room.x+5.5,z:room.z-5.5};
-    this.zombies.spawn(type,point,roomId,this.round);
+    const windows=this.world.spawnWindows(open);
+    const win=windows[Math.floor(Math.random()*windows.length)]||this.world.windows[0];
+    if(!win)return;
+    const room=this.world.rooms.get(win.roomId);
+    this.zombies.spawn(type,win.outside,win.roomId,this.round,win);
     this.audio.play("boss");
-    this.ui.notify("WARNING / BOSS SIGNATURE",type.toUpperCase()+" ENTERING THE AREA");
+    this.ui.notify("WARNING / BOSS SIGNATURE","Something enormous is forcing its way through a window.");
     platform.happyTime();
     this.bossSpawned=true;
   }
-
   spawnOne() {
-    if(this.zombies.count()>=this.zombies.maxAlive) return false;
+    if(this.zombies.count()>=this.zombies.maxAlive)return false;
     const open=this.world.openRoomIds();
-    const playerRoom=this.world.roomAt(this.camera.position);
-    const points=this.world.spawnPoints.filter(p=>open.includes(p.room)&&Math.hypot(p.x-this.camera.position.x,p.z-this.camera.position.z)>7);
-    let point=points[Math.floor(Math.random()*Math.max(1,points.length))];
-    if(!point) {
-      const room=this.world.rooms.get(playerRoom);
-      point={room:playerRoom,x:room.x+(Math.random()<0.5?-6:6),z:room.z+(Math.random()<0.5?-6:6)};
-    }
+    const playerPos=this.camera.position;
+    const windows=this.world.spawnWindows(open).filter(win=>Math.hypot(win.outside.x-playerPos.x,win.outside.z-playerPos.z)>9);
+    if(!windows.length)return false;
+    const win=windows[Math.floor(Math.random()*windows.length)];
     const type=this.zombies.chooseType(this.round);
-    this.zombies.spawn(type,{x:point.x,z:point.z},point.room,this.round);
+    const zombie=this.zombies.spawn(type,win.outside,win.roomId,this.round,win);
+    if(!zombie)return false;
     this.spawnsRemaining--;
     return true;
   }
-
   onZombieKill(zombie,points,headshot) {
     this.kills++;
     this.roundKills++;
@@ -369,17 +366,18 @@ export class BlacksiteGame {
     }
     if(this.spawnsRemaining===0 && this.zombies.count()===0) {
       if(this.waveBreak<=0) {
-        this.waveBreak=5;
+        this.waveBreak=25;
         this.ui.setZombies(0);
         this.ui.setRound(this.round,"AREA SECURE");
-        this.ui.notify("AREA SECURE","Next wave begins in 5 seconds.");
+        this.ui.notify("AREA SECURE","25 seconds until the next wave. Use the time to buy, reload and open new areas.");
         this.progression.applyRoundBonus(this.round);
         this.ui.setPoints(this.progression.points);
         this.player.heal(15);
         this.player.addArmor(5);
       } else {
         this.waveBreak-=dt;
-        if(this.waveBreak<=0) this.startRound();
+        this.ui.setRound(this.round,"NEXT WAVE IN "+Math.ceil(this.waveBreak)+"s");
+        if(this.waveBreak<=0)this.startRound();
       }
     }
   }
