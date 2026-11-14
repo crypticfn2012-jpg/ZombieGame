@@ -651,6 +651,7 @@ export class FacilityWorld {
 
   reset() {
     this.powerOn=false;
+    for(const entry of this.roomLights)entry.light.intensity=entry.roomId==="start"?3.2:0.85;
     this.colliders=this.baseColliders.map(c=>({...c}));
     for(const door of this.doors) {
       door.open=false;
