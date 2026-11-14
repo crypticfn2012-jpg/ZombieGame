@@ -11,7 +11,7 @@ const PERKS = {
 };
 
 export class ProgressionSystem {
-  constructor(world,weapons,player,audio,save,onNotify,onObjective) {
+  constructor(world,weapons,player,audio,save,onNotify,onObjective,onMission) {
     this.world=world;
     this.weapons=weapons;
     this.player=player;
@@ -19,6 +19,7 @@ export class ProgressionSystem {
     this.save=save;
     this.onNotify=onNotify;
     this.onObjective=onObjective;
+    this.onMission=onMission;
     this.points=500;
     this.totalEarned=500;
     this.perks=new Set();
@@ -27,6 +28,12 @@ export class ProgressionSystem {
     this.quickUsed=false;
     this.secretUnlocked=false;
     this.mysteryReveal=null;
+    this.roundsSurvived=0;
+    this.documentsCollected=new Set((this.save?.data?.documents||[]).filter(id=>["document-a","document-b","document-c"].includes(id)));
+    this.terminalRead=false;
+    this.packUsed=false;
+    this.finalBossKilled=false;
+    this.missionStage=0;
   }
 
   earn(amount,critical=false) {
@@ -119,8 +126,8 @@ export class ProgressionSystem {
       }
     }
     this.audio?.play("power");
-    this.onNotify?.("FACILITY POWER RESTORED","Perk machines and the reactor vault are now online.");
-    this.onObjective?.("ACTIVATE PACK-A-PUNCH IN THE REACTOR VAULT");
+    this.onNotify?.("GENERATOR ONLINE","Emergency lighting restored. The facility is waking up.");
+    this.updateMission();
     this.audio?.play("round");
     return true;
   }
@@ -139,7 +146,9 @@ export class ProgressionSystem {
     if(!this.spend(item.price)) return false;
     this.weapons.upgradeCurrent();
     this.audio?.play("power");
+    this.packUsed=true;
     this.onNotify?.("PACK-A-PUNCH COMPLETE",this.weapons.current.name+" / MK-II");
+    this.updateMission();
     return true;
   }
 
@@ -161,9 +170,10 @@ export class ProgressionSystem {
 
   collectDocument(item) {
     if(this.save.discover(item.id)) {
+      this.documentsCollected.add(item.id);
       item.active=true;
       this.onNotify?.("CLASSIFIED FILE RECOVERED",this.documentText(item.id));
-      this.onObjective?.("SURVIVE. THE FACILITY LOGS MAY EXPLAIN THE OUTBREAK.");
+      this.updateMission();
       return true;
     }
     this.onNotify?.("FILE ALREADY RECOVERED","This document is already in your field notes.");
@@ -181,8 +191,13 @@ export class ProgressionSystem {
       this.onNotify?.("TERMINAL OFFLINE","Restore power in the control room.");
       return false;
     }
-    this.onNotify?.("NORTHSTAR ARCHIVE", "PROJECT LANTERN / TRANSMISSION ORIGIN: REACTOR VAULT");
-    this.onObjective?.("REACH THE CONTAINMENT ARENA");
+    if(this.documentsCollected.size<3) {
+      this.onNotify?.("ARCHIVE LOCKED","Recover all three Project Lantern files before accessing the full incident record.");
+      return false;
+    }
+    this.terminalRead=true;
+    this.onNotify?.("NORTHSTAR ARCHIVE","PROJECT LANTERN / SIGNAL ORIGIN: BELOW THE REACTOR");
+    this.updateMission();
     return true;
   }
 
@@ -195,6 +210,52 @@ export class ProgressionSystem {
     this.player.health=Math.max(45,Math.round(this.player.maxHealth*0.42));
     this.onNotify?.("QUICK REVIVE","Emergency dose administered. This perk has been consumed.");
     return true;
+  }
+
+  onRoundComplete(round) {
+    this.roundsSurvived=Math.max(this.roundsSurvived,round);
+    this.updateMission();
+  }
+
+  onBossDefeated(type) {
+    if(type==="experiment"||type==="overseer") {
+      this.finalBossKilled=true;
+      this.updateMission();
+    }
+  }
+
+  refreshMission() { this.updateMission(true); }
+
+  updateMission(initial=false) {
+    const steps=[
+      {title:"HOLD THE CHECKPOINT",objective:"SURVIVE 3 WAVES"},
+      {title:"BRING THE FACILITY ONLINE",objective:"FIND THE GENERATOR SWITCH"},
+      {title:"RECOVER PROJECT LANTERN FILES",objective:"COLLECT ALL 3 CLASSIFIED RECORDS"},
+      {title:"TRACE THE SIGNAL",objective:"ACCESS THE ARCHIVE TERMINAL"},
+      {title:"ARM THE REACTOR",objective:"REACH THE REACTOR CHAMBER"},
+      {title:"SILENCE THE SOURCE",objective:"DEFEAT THE EXPERIMENT"},
+      {title:"OPERATION COMPLETE",objective:"THE SIGNAL HAS FALLEN SILENT"}
+    ];
+    const checks=[
+      this.roundsSurvived>=3,
+      this.powerOn,
+      this.documentsCollected.size>=3,
+      this.terminalRead,
+      this.packUsed,
+      this.finalBossKilled
+    ];
+    let next=this.missionStage;
+    while(next<checks.length&&checks[next])next++;
+    if(next>this.missionStage&&!initial) {
+      for(let stage=this.missionStage;stage<next;stage++) {
+        const completed=steps[stage];
+        this.onNotify?.("MISSION COMPLETE / "+String(stage+1).padStart(2,"0"),completed.title);
+      }
+    }
+    this.missionStage=next;
+    const current=steps[Math.min(next,steps.length-1)];
+    this.onMission?.(Math.min(next+1,steps.length),steps.length,current.title);
+    this.onObjective?.(current.objective);
   }
 
   applyRoundBonus(round) {
