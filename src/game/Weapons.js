@@ -1,5 +1,8 @@
 import * as THREE from "three";
 
+const toonRamp = new THREE.DataTexture(new Uint8Array([54,54,54,255,132,132,132,255,224,224,224,255]),3,1,THREE.RGBAFormat);
+toonRamp.minFilter=THREE.NearestFilter; toonRamp.magFilter=THREE.NearestFilter; toonRamp.generateMipmaps=false; toonRamp.needsUpdate=true;
+
 export const WEAPON_DATA = {
   pistol: { name:"SERVICE PISTOL", damage:34, fireRate:0.28, reload:1.35, mag:12, reserve:84, spread:0.012, pellets:1, automatic:false, range:48, color:0x75848a, sound:"shoot", price:0 },
   revolver: { name:"HEAVY REVOLVER", damage:88, fireRate:0.46, reload:1.85, mag:6, reserve:42, spread:0.008, pellets:1, automatic:false, range:70, color:0x9b7855, sound:"shoot", price:1800 },
@@ -103,7 +106,7 @@ export class WeaponSystem {
     }
     const gun=this.current;
     if(!gun) return;
-    const material=(color,metal=0.35,rough=0.4,emissive=0)=>new THREE.MeshStandardMaterial({color,metalness:metal,roughness:rough,emissive,emissiveIntensity:0.55});
+    const material=(color,metal=0.35,rough=0.4,emissive=0)=>new THREE.MeshToonMaterial({color,gradientMap:toonRamp,emissive,emissiveIntensity:0.45});
     const body=material(gun.upgraded?0x253a4b:gun.color,0.55,0.38,gun.upgraded?0x1d76a0:0);
     const dark=material(0x11181e,0.7,0.35);
     const trim=material(gun.upgraded?0x37d5e6:0x849397,0.75,0.27,gun.upgraded?0x0c6d78:0);
