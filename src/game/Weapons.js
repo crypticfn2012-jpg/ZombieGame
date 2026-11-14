@@ -39,11 +39,15 @@ export class WeaponSystem {
     this.aiming=false;
     this.model=new THREE.Group();
     this.camera.add(this.model);
-    this.model.position.set(0.34,-0.31,-0.62);
+    this.model.position.set(0.42,-0.39,-0.82);
+    this.model.scale.setScalar(1.45);
+    this.model.renderOrder=999;
     this.model.rotation.order="YXZ";
     this.knifeModel=new THREE.Group();
     this.camera.add(this.knifeModel);
-    this.knifeModel.position.set(0.36,-0.34,-0.58);
+    this.knifeModel.position.set(0.42,-0.39,-0.78);
+    this.knifeModel.scale.setScalar(1.35);
+    this.knifeModel.renderOrder=999;
     this.knifeModel.visible=false;
     const knifeSteel=new THREE.MeshToonMaterial({color:0xc7d6d7,gradientMap:null});
     const knifeDark=new THREE.MeshToonMaterial({color:0x222b32});
@@ -113,7 +117,12 @@ export class WeaponSystem {
     const add=(x,y,z,sx,sy,sz,mat) => {
       const mesh=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat);
       mesh.position.set(x,y,z);
-      mesh.castShadow=true;
+      mesh.castShadow=false;
+      mesh.frustumCulled=false;
+      mesh.renderOrder=999;
+      mat.depthTest=false;
+      mat.depthWrite=false;
+      mat.toneMapped=false;
       this.model.add(mesh);
       return mesh;
     };
@@ -230,8 +239,8 @@ export class WeaponSystem {
 
   setAim(value) {
     this.aiming=value;
-    this.model.position.x=value?0.12:0.34;
-    this.model.position.y=value?-0.27:-0.31;
+    this.model.position.x=value?0.2:0.42;
+    this.model.position.y=value?-0.32:-0.39;
   }
 
   fire(zombies, perks, dt, time) {
@@ -351,7 +360,7 @@ export class WeaponSystem {
     this.meleeTimer=Math.max(0,this.meleeTimer-dt);
     const reloadTilt=this.reloading?0.58:0;
     this.model.rotation.z=THREE.MathUtils.damp(this.model.rotation.z,reloadTilt,9,dt);
-    this.model.position.y=THREE.MathUtils.damp(this.model.position.y,(this.aiming?-0.27:-0.31)+(this.reloading?-0.12:0),10,dt);
+    this.model.position.y=THREE.MathUtils.damp(this.model.position.y,(this.aiming?-0.32:-0.39)+(this.reloading?-0.12:0),10,dt);
     if(this.knifeModel.visible) {
       const swing=this.meleeTimer>0?1-this.meleeTimer/0.48:0;
       this.knifeModel.rotation.y=THREE.MathUtils.damp(this.knifeModel.rotation.y,swing>0?Math.sin(swing*Math.PI)*-1.1:0,18,dt);
@@ -361,9 +370,9 @@ export class WeaponSystem {
     this.recoil=THREE.MathUtils.damp(this.recoil,0,18,dt);
     this.bobTime+=dt;
     const bob=this.aiming?0:Math.sin(this.bobTime*8)*0.006;
-    this.model.position.x=THREE.MathUtils.damp(this.model.position.x,this.aiming?0.12:0.34,12,dt);
+    this.model.position.x=THREE.MathUtils.damp(this.model.position.x,this.aiming?0.2:0.42,12,dt);
     this.model.position.y=THREE.MathUtils.damp(this.model.position.y,(this.aiming?-0.27:-0.31)+bob-this.recoil*0.2,14,dt);
-    this.model.position.z=THREE.MathUtils.damp(this.model.position.z,-0.62+this.recoil,22,dt);
+    this.model.position.z=THREE.MathUtils.damp(this.model.position.z,-0.82+this.recoil,22,dt);
     this.model.rotation.x=THREE.MathUtils.damp(this.model.rotation.x,-this.recoil*0.7,20,dt);
     this.model.visible=!this.melee;
     this.knifeModel.visible=this.melee;
