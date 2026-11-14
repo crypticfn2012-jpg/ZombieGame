@@ -107,7 +107,9 @@ export class GameUI {
 
   setRound(round,status="INCOMING") {
     document.getElementById("hud-round").textContent=String(round).padStart(2,"0");
-    document.getElementById("hud-wave-status").textContent=status;
+    const node=document.getElementById("hud-wave-status");
+    node.dataset.mode=status.startsWith("NEXT WAVE IN")?"break":"wave";
+    node.textContent=status;
   }
 
   setPoints(points) {
@@ -151,7 +153,9 @@ export class GameUI {
   }
 
   setZombies(count) {
-    document.getElementById("hud-wave-status").textContent=count>0?String(count)+" HOSTILES REMAINING":"AREA CLEAR";
+    const node=document.getElementById("hud-wave-status");
+    if(node.dataset.mode==="break")return;
+    node.textContent=count>0?String(count)+" HOSTILES REMAINING":"AREA CLEAR";
   }
 
   setPrompt(item) {
