@@ -150,7 +150,7 @@ export class GameUI {
 
   setMission(stage,total,title) {
     const node=document.getElementById("mission-tag");
-    if(node) node.textContent=stage>total?"OPERATION COMPLETE":"OPERATION LANTERN  /  "+String(stage).padStart(2,"0")+" OF "+String(total).padStart(2,"0");
+    if(node) node.textContent=stage>=total?"OPERATION COMPLETE":"OPERATION LANTERN  /  "+String(stage).padStart(2,"0")+" OF "+String(total).padStart(2,"0");
     const heading=document.getElementById("mission-heading");
     if(heading) heading.textContent=title;
   }
