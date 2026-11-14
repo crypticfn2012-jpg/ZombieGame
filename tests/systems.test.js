@@ -55,3 +55,26 @@ test("Pack-a-Punch applies one 1.5x damage multiplier, not a double multiplier",
   weapons.fire(zombies,new Set(),1/60,0);
   assert.equal(hitDamage[0],Math.round(baseDamage*1.5));
 });
+
+
+test("loadout supports a pistol plus three firearm slots and a separate knife",()=>{
+  const camera=new THREE.PerspectiveCamera(75,1,0.1,100);
+  camera.position.set(0,1.7,0);
+  camera.lookAt(0,1.7,-1);
+  camera.updateMatrixWorld(true);
+  const weapons=new WeaponSystem(camera,quietAudio);
+  weapons.addWeapon("rifle");
+  weapons.addWeapon("shotgun");
+  assert.equal(weapons.inventory.length,3);
+  assert.deepEqual(weapons.hud().slots.map(item=>item.slot),[1,2,3]);
+  weapons.equipKnife();
+  assert.equal(weapons.hud().melee,true);
+  assert.equal(weapons.model.visible,false);
+  assert.equal(weapons.knifeModel.visible,true);
+  let damage=0;
+  assert.equal(weapons.meleeAttack({damageRay(_origin,_direction,_range,amount){damage=amount;return null;}}),true);
+  assert.equal(damage,115);
+  assert.equal(weapons.meleeAttack({damageRay(){return null;}}),false);
+  weapons.equipKnife();
+  assert.equal(weapons.hud().melee,false);
+});
