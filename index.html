@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#080c12">
-  <meta name="description" content="BLACKSITE: OUTBREAK — survive the underground research facility, uncover the signal, and make it through the next wave.">
-  <title>BLACKSITE: OUTBREAK</title>
+  <meta name="description" content="DEAD FREQUENCY — survive Facility 07, uncover Project Lantern, and silence the signal.">
+  <title>DEAD FREQUENCY — A NORTHSTAR INCIDENT</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -27,19 +27,19 @@
     <div id="vignette"></div>
     <div id="screen-menu" class="screen screen-visible">
       <div class="menu-backdrop-grid"></div>
-      <div class="menu-topline"><span class="brand-mark">B<span>/</span>O</span><span class="topline-right">NORTHSTAR CONTAINMENT GROUP <i>///</i> FACILITY 07</span></div>
+      <div class="menu-topline"><span class="brand-mark">N<span>/</span>07</span><span class="topline-right">NORTHSTAR CONTAINMENT <i>///</i> NEVADA SITE 07</span></div>
       <section class="menu-content">
-        <div class="eyebrow"><span class="live-dot"></span> INCIDENT 07-19 / CONTAINMENT FAILURE</div>
-        <h1>BLACKSITE<span>:</span><br><em>OUTBREAK</em></h1>
-        <p class="menu-subtitle">THEY BUILT SOMETHING BENEATH THE DESERT.<br>NOW IT'S TRYING TO GET OUT.</p>
+        <div class="eyebrow"><span class="live-dot"></span> NORTHSTAR ARCHIVE / 14 OCT 1996 / SIGNAL BREACH</div>
+        <h1>DEAD<br><em>FREQUENCY</em></h1>
+        <p class="menu-subtitle">FACILITY 07 HAS GONE QUIET.<br>THE SIGNAL HAS NOT.</p>
         <div class="menu-actions">
-          <button id="start-button" class="button button-primary"><span>DEPLOY</span><b>→</b></button>
+          <button id="start-button" class="button button-primary"><span>START SHIFT</span><b>→</b></button>
           <button id="how-button" class="button button-quiet">HOW TO PLAY</button>
           <button id="settings-button" class="button button-quiet">SETTINGS</button>
         </div>
-        <div class="menu-stats"><div><small>BEST ROUND</small><strong id="menu-best-round">—</strong></div><div><small>TOTAL ELIMINATIONS</small><strong id="menu-total-kills">000</strong></div><div><small>BUILD</small><strong>FIELD TEST 0.1</strong></div></div>
+        <div class="menu-stats"><div><small>BEST SHIFT</small><strong id="menu-best-round">—</strong></div><div><small>CONFIRMED KILLS</small><strong id="menu-total-kills">000</strong></div><div><small>BUILD</small><strong>INCIDENT 07</strong></div></div>
       </section>
-      <div class="menu-footer"><span>BLACKSITE RESEARCH DIVISION</span><span>AUTHORIZED PERSONNEL ONLY <b>●</b></span></div>
+      <div class="menu-footer"><span>NORTHSTAR / INTERNAL SECURITY</span><span>PROPERTY OF NORTHSTAR GROUP <b>●</b></span></div>
     </div>
     <div id="screen-help" class="screen screen-panel">
       <div class="panel-card">
@@ -70,7 +70,7 @@
     </div>
     <div id="screen-pause" class="screen screen-panel">
       <div class="panel-card panel-card-compact">
-        <div class="panel-kicker">FIELD OPERATIONS SUSPENDED</div><h2>PAUSED</h2>
+        <div class="panel-kicker">SHIFT SUSPENDED / MANUAL OVERRIDE</div><h2>PAUSED</h2>
         <button id="resume-button" class="button button-primary">RESUME <b>→</b></button>
         <button id="pause-settings-button" class="button button-quiet">SETTINGS</button>
         <button id="restart-button" class="button button-quiet">RESTART RUN</button>
@@ -88,7 +88,7 @@
     </div>
     <div id="hud" class="hud hidden">
       <div class="hud-top-left"><div class="round-label">ROUND <strong id="hud-round">01</strong></div><div class="wave-status" id="hud-wave-status">INCOMING</div></div>
-      <div class="hud-top-right"><div class="objective-tag">CURRENT OBJECTIVE</div><div id="hud-objective">SURVIVE THE OUTBREAK</div></div>
+      <div class="hud-top-right"><div class="objective-tag" id="mission-tag">OPERATION LANTERN / 01 OF 06</div><div class="mission-heading" id="mission-heading">HOLD THE CHECKPOINT</div><div id="hud-objective">SURVIVE 3 WAVES</div></div>
       <div class="hud-bottom-left"><div class="health-row"><div class="health-icon">+</div><div class="health-track"><span id="health-fill"></span></div><strong id="health-value">100</strong></div><div class="perk-list" id="perk-list"></div></div>
       <div id="weapon-slots" class="weapon-slots"></div><div class="hud-bottom-right"><div class="credits"><span>FIELD CREDITS</span><strong id="hud-points">500</strong></div><div class="weapon-name" id="hud-weapon">SERVICE PISTOL</div><div class="ammo"><strong id="hud-ammo">12</strong><span>/</span><span id="hud-reserve">72</span></div><div class="ammo-caption">MAGAZINE <span>·</span> RESERVE</div></div>
       <div id="interaction-prompt" class="interaction-prompt hidden"><span class="interact-key">E</span><div><strong id="interaction-title">OPEN SECURITY DOOR</strong><small id="interaction-description">750 CREDITS</small></div></div>
@@ -98,7 +98,7 @@
       <div class="crosshair"><i></i><b></b></div>
       <button id="pause-hud-button" class="pause-hud-button" aria-label="Pause">Ⅱ</button>
     </div>
-    <div id="loading-screen" class="loading-screen"><div class="loading-title">BLACKSITE<span>:</span> OUTBREAK</div><div class="loading-track"><span></span></div><small>INITIALIZING CONTAINMENT SYSTEMS</small></div>
+    <div id="loading-screen" class="loading-screen"><div class="loading-title">DEAD<span>:</span> FREQUENCY</div><div class="loading-track"><span></span></div><small>TUNING EMERGENCY CHANNEL</small></div>
   </main>
   <script type="module" src="./src/main.js"></script>
 </body>
