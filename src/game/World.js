@@ -167,6 +167,7 @@ export class FacilityWorld {
       this.windows.push(win);
       const sill=this.mat(0x66747a,0.75,0.2), board=this.mat(0x76563e,0.92,0.02), frame=this.materials.darkWall;
       if(side==="north"||side==="south") {
+        this.addCollider(x,z,windowWidth,0.8,"window");
         this.box(group,0,windowBottom/2,side==="north"?-half:half,windowWidth,windowBottom,thickness,sill);
         this.box(group,0,(height+windowTop)/2,side==="north"?-half:half,windowWidth,height-windowTop,thickness,material);
         this.box(group,-(windowWidth/2+ (18-windowWidth)/4),height/2,side==="north"?-half:half,(18-windowWidth)/2,height,thickness,material);
@@ -176,6 +177,7 @@ export class FacilityWorld {
         this.addCollider(room.x-(windowWidth/2+(18-windowWidth)/4),z,(18-windowWidth)/2,0.8);
         this.addCollider(room.x+(windowWidth/2+(18-windowWidth)/4),z,(18-windowWidth)/2,0.8);
       } else {
+        this.addCollider(x,z,0.8,windowWidth,"window");
         this.box(group,side==="west"?-half:half,windowBottom/2,0,thickness,windowBottom,windowWidth,sill);
         this.box(group,side==="west"?-half:half,(height+windowTop)/2,0,thickness,height-windowTop,windowWidth,material);
         this.box(group,side==="west"?-half:half,height/2,-(windowWidth/2+(18-windowWidth)/4),thickness,height,(18-windowWidth)/2,material);
