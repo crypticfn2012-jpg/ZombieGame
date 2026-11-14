@@ -307,8 +307,8 @@ export class FacilityWorld {
         this.box(mesh,0.16,1.88,zz,0.035,3.62,0.035,this.materials.rust,{castShadow:false});
       }
       for(const y of [0.65,2.95]){
-        this.box(mesh,0.2,y,0,0.12,0.18,3.75,metal,{castShadow:false});
-        this.box(mesh,-0.2,y,0,0.12,0.18,3.75,metal,{castShadow:false});
+        this.box(mesh,0.2,y,0,3.75,0.18,0.12,metal,{castShadow:false});
+        this.box(mesh,-0.2,y,0,3.75,0.18,0.12,metal,{castShadow:false});
       }
       this.box(mesh,0,1.95,0,0.16,0.18,0.18,this.materials.amber,{castShadow:false});
     }else{
@@ -320,8 +320,8 @@ export class FacilityWorld {
         this.box(mesh,xx,1.88,0.16,0.035,3.62,0.035,this.materials.rust,{castShadow:false});
       }
       for(const y of [0.65,2.95]){
-        this.box(mesh,0.0,y,0.2,3.75,0.18,0.12,metal,{castShadow:false});
-        this.box(mesh,0.0,y,-0.2,3.75,0.18,0.12,metal,{castShadow:false});
+        this.box(mesh,0.0,y,0.2,0.12,0.18,3.75,metal,{castShadow:false});
+        this.box(mesh,0.0,y,-0.2,0.12,0.18,3.75,metal,{castShadow:false});
       }
       this.box(mesh,0,1.95,0.2,0.18,0.18,0.16,this.materials.amber,{castShadow:false});
     }
@@ -330,7 +330,7 @@ export class FacilityWorld {
     this.scene.add(mesh);
     const door={...link,x,z,mesh,panel:mesh,indicator:lintel,open:false,collider:true};
     this.doors.push(door);
-    this.interactables.push({id:link.id,type:"door",name:"BOARDed SECURITY DOOR",description:"CLEAR THE BARRICADE",price:link.cost,position:new THREE.Vector3(x,1.5,z),mesh,ref:door});
+    this.interactables.push({id:link.id,type:"door",name:"BOARDED SECURITY DOOR",description:"CLEAR THE BARRICADE",price:link.cost,position:new THREE.Vector3(x,1.5,z),mesh,ref:door});
     this.addDoorCollider(door);
     this.box(this.scene,x,-0.48,z,4.25,0.12,4.25,this.materials.floor,{castShadow:false});
   }
@@ -427,7 +427,7 @@ export class FacilityWorld {
     for(let side=0;side<2;side++){
       const x=side?7:-7;
       this.addProp("storage",x,-1,0.45,3.2,5.4,0x59645f,{collider:false});
-      for(let y=0;y<3;y++)this.addProp("storage",x,y*0+(-2+y*1.15),-1,4.8,0.12,0.9,0x68766d,{collider:false});
+      for(let y=0;y<3;y++)this.addProp("storage",x,-2+y*1.15,4.8,0.12,0.9,0x68766d,{collider:false});
     }
     // Infirmary: two beds with raised headboards and privacy screens.
     for(const x of [-5,5]){
