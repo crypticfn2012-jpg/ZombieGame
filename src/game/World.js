@@ -43,6 +43,7 @@ export class FacilityWorld {
     this.interactables = [];
     this.colliders = [];
     this.spawnPoints = [];
+    this.windows = [];
     this.powerOn = false;
     this.machineRefs = {};
     this.materials = {
@@ -98,12 +99,7 @@ export class FacilityWorld {
     this.buildProps();
     this.buildMachines();
     this.buildAmbientDetails();
-    this.spawnPoints = ROOM_DATA.flatMap(room => [
-      { room:room.id, x:room.x-6, z:room.z-6 },
-      { room:room.id, x:room.x+6, z:room.z-6 },
-      { room:room.id, x:room.x-6, z:room.z+6 },
-      { room:room.id, x:room.x+6, z:room.z+6 }
-    ]);
+    this.spawnPoints = this.windows.map(win=>({room:win.roomId,x:win.outside.x,z:win.outside.z,window:win}));
     this.baseColliders = this.colliders.filter(c=>!c.door).map(c=>({...c}));
   }
 
@@ -129,10 +125,12 @@ export class FacilityWorld {
     this.box(group,0,4.9,0,18,0.35,18,this.materials.darkWall,{castShadow:false});
     this.box(group,0,0.04,-8.8,18,0.3,0.35,this.materials.trim);
     this.box(group,0,0.04,8.8,18,0.3,0.35,this.materials.trim);
-    this.buildWallEdge(group, room, "north", this.hasDoorAt(room,"north"));
-    this.buildWallEdge(group, room, "south", this.hasDoorAt(room,"south"));
-    this.buildWallEdge(group, room, "east", this.hasDoorAt(room,"east"));
-    this.buildWallEdge(group, room, "west", this.hasDoorAt(room,"west"));
+    const windowSide=["south","east","west","north"].find(side=>!this.hasDoorAt(room,side));
+    room.windowSide=windowSide;
+    this.buildWallEdge(group, room, "north", this.hasDoorAt(room,"north"),windowSide==="north");
+    this.buildWallEdge(group, room, "south", this.hasDoorAt(room,"south"),windowSide==="south");
+    this.buildWallEdge(group, room, "east", this.hasDoorAt(room,"east"),windowSide==="east");
+    this.buildWallEdge(group, room, "west", this.hasDoorAt(room,"west"),windowSide==="west");
     for (let i=-7;i<=7;i+=2) {
       this.box(group,i,4.7,-8.6,0.18,0.25,0.4,this.materials.metal,{castShadow:false});
       this.box(group,i,4.7,8.6,0.18,0.25,0.4,this.materials.metal,{castShadow:false});
@@ -151,39 +149,70 @@ export class FacilityWorld {
     }
   }
 
-  buildWallEdge(group, room, side, hasDoor) {
-    const material = this.materials.wall;
-    const half = 9;
-    const height = 5;
-    const thickness = 0.7;
-    const opening = hasDoor ? 4.2 : 0;
-    if (side === "north" || side === "south") {
-      const z = side === "north" ? -half : half;
-      if (hasDoor) {
-        const segment = (18-opening)/2;
+  buildWallEdge(group, room, side, hasDoor, hasWindow=false) {
+    const material=this.materials.wall;
+    const half=9,height=5,thickness=0.7;
+    const opening=hasDoor?4.2:0;
+    const windowWidth=3.4;
+    const windowBottom=0.82;
+    const windowTop=3.15;
+    const makeWindow=()=>{
+      const normal=side==="north"?{x:0,z:-1}:side==="south"?{x:0,z:1}:side==="east"?{x:1,z:0}:{x:-1,z:0};
+      const x=room.x+(side==="east"?9:side==="west"?-9:0);
+      const z=room.z+(side==="south"?9:side==="north"?-9:0);
+      const win={id:room.id+"-window",roomId:room.id,side,x,z,normal,
+        outside:{x:x+normal.x*7.5,z:z+normal.z*7.5},
+        approach:{x:x+normal.x*0.85,z:z+normal.z*0.85},
+        inside:{x:x-normal.x*1.8,z:z-normal.z*1.8}};
+      this.windows.push(win);
+      const sill=this.mat(0x66747a,0.75,0.2), board=this.mat(0x76563e,0.92,0.02), frame=this.materials.darkWall;
+      if(side==="north"||side==="south") {
+        this.box(group,0,windowBottom/2,side==="north"?-half:half,windowWidth,windowBottom,thickness,sill);
+        this.box(group,0,(height+windowTop)/2,side==="north"?-half:half,windowWidth,height-windowTop,thickness,material);
+        this.box(group,-(windowWidth/2+ (18-windowWidth)/4),height/2,side==="north"?-half:half,(18-windowWidth)/2,height,thickness,material);
+        this.box(group,(windowWidth/2+ (18-windowWidth)/4),height/2,side==="north"?-half:half,(18-windowWidth)/2,height,thickness,material);
+        this.box(group,0,windowBottom+0.04,side==="north"?-half:half,windowWidth+0.25,0.12,0.95,frame);
+        for(let i=0;i<3;i++) this.box(group,-1.05+i*1.05,1.65,side==="north"?-half+0.12:half-0.12,0.12,0.12,0.42,board,{castShadow:false});
+        this.addCollider(room.x-(windowWidth/2+(18-windowWidth)/4),z,(18-windowWidth)/2,0.8);
+        this.addCollider(room.x+(windowWidth/2+(18-windowWidth)/4),z,(18-windowWidth)/2,0.8);
+      } else {
+        this.box(group,side==="west"?-half:half,windowBottom/2,0,thickness,windowBottom,windowWidth,sill);
+        this.box(group,side==="west"?-half:half,(height+windowTop)/2,0,thickness,height-windowTop,windowWidth,material);
+        this.box(group,side==="west"?-half:half,height/2,-(windowWidth/2+(18-windowWidth)/4),thickness,height,(18-windowWidth)/2,material);
+        this.box(group,side==="west"?-half:half,height/2,(windowWidth/2+(18-windowWidth)/4),thickness,height,(18-windowWidth)/2,material);
+        this.box(group,side==="west"?-half:half,windowBottom+0.04,0,0.95,0.12,windowWidth+0.25,frame);
+        for(let i=0;i<3;i++) this.box(group,side==="west"?-half+0.12:half-0.12,1.65,-1.05+i*1.05,0.42,0.12,0.12,board,{castShadow:false});
+        this.addCollider(x,room.z-(windowWidth/2+(18-windowWidth)/4),0.8,(18-windowWidth)/2);
+        this.addCollider(x,room.z+(windowWidth/2+(18-windowWidth)/4),0.8,(18-windowWidth)/2);
+      }
+    };
+    if(hasWindow&&!hasDoor) { makeWindow(); return; }
+    if(side==="north"||side==="south") {
+      const z=side==="north"?-half:half;
+      if(hasDoor) {
+        const segment=(18-opening)/2;
         this.box(group,-(opening/2+segment/2),height/2,z,segment,height,thickness,material);
         this.box(group,(opening/2+segment/2),height/2,z,segment,height,thickness,material);
-      } else this.box(group,0,height/2,z,18,height,thickness,material);
-      if (hasDoor) {
-        const segment=(18-opening)/2;
         this.addCollider(room.x-(opening/2+segment/2),room.z+(side==="north"?-9:9),segment,0.8);
         this.addCollider(room.x+(opening/2+segment/2),room.z+(side==="north"?-9:9),segment,0.8);
-      } else this.addCollider(room.x,room.z+(side==="north"?-9:9),18,0.8);
+      } else {
+        this.box(group,0,height/2,z,18,height,thickness,material);
+        this.addCollider(room.x,room.z+(side==="north"?-9:9),18,0.8);
+      }
     } else {
-      const x = side === "west" ? -half : half;
-      if (hasDoor) {
-        const segment = (18-opening)/2;
+      const x=side==="west"?-half:half;
+      if(hasDoor) {
+        const segment=(18-opening)/2;
         this.box(group,x,height/2,-(opening/2+segment/2),thickness,height,segment,material);
         this.box(group,x,height/2,(opening/2+segment/2),thickness,height,segment,material);
-      } else this.box(group,x,height/2,0,thickness,height,18,material);
-      if (hasDoor) {
-        const segment=(18-opening)/2;
         this.addCollider(room.x+(side==="west"?-9:9),room.z-(opening/2+segment/2),0.8,segment);
         this.addCollider(room.x+(side==="west"?-9:9),room.z+(opening/2+segment/2),0.8,segment);
-      } else this.addCollider(room.x+(side==="west"?-9:9),room.z,0.8,18);
+      } else {
+        this.box(group,x,height/2,0,thickness,height,18,material);
+        this.addCollider(room.x+(side==="west"?-9:9),room.z,0.8,18);
+      }
     }
   }
-
   buildDoor(link) {
     const a = this.rooms.get(link.a), b = this.rooms.get(link.b);
     const x = (a.x+b.x)/2, z = (a.z+b.z)/2;
@@ -226,6 +255,8 @@ export class FacilityWorld {
     }
     return best;
   }
+
+  spawnWindows(openRooms=["start"]) { return this.windows.filter(win=>openRooms.includes(win.roomId)); }
 
   openRoomIds() {
     const seen = new Set(["start"]);
