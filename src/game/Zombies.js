@@ -68,7 +68,17 @@ export class ZombieDirector {
       part(0.34,2.1,-0.08,0.15,0.38,0.15,mat(0x2d303c));
     }
     const aura=null;
-    return {group,type,data,hp:data.health,maxHp:data.health,armL,armR,legL,legR,torso,aura,attackTimer:0,specialTimer:1.4,chargeTime:0,chargeDirection:new THREE.Vector3(),phase:Math.random()*Math.PI*2,dead:false,roomId:"start",hurt:0};
+    const flashMaterials=[];
+    const seenMaterials=new Set();
+    group.traverse(child=>{
+      if(!child.isMesh) return;
+      const list=Array.isArray(child.material)?child.material:[child.material];
+      for(const material of list) if(material && !seenMaterials.has(material)) {
+        seenMaterials.add(material);
+        flashMaterials.push({material,color:material.color?.clone(),emissive:material.emissive?.clone(),emissiveIntensity:material.emissiveIntensity||0});
+      }
+    });
+    return {group,type,data,hp:data.health,maxHp:data.health,armL,armR,legL,legR,torso,aura,flashMaterials,attackTimer:0,specialTimer:1.4,chargeTime:0,chargeDirection:new THREE.Vector3(),phase:Math.random()*Math.PI*2,dead:false,roomId:"start",hurt:0};
   }
 
   spawn(type, position, roomId, round=1) {
@@ -86,35 +96,47 @@ export class ZombieDirector {
   }
 
   damageRay(origin,direction,range,damage,deadshot=false) {
-    let target=null, nearest=range;
+    // Test a forgiving upright body capsule rather than a tiny sphere around the torso.
+    // The old sphere sat below the default crosshair height, so straight-ahead shots missed.
+    const ray=direction.clone().normalize();
+    let target=null, nearest=range, hitY=0;
     for(const zombie of this.zombies) {
       if(zombie.dead) continue;
-      const center=zombie.group.position.clone().add(new THREE.Vector3(0,1.18*zombie.data.scale,0));
-      const to=center.sub(origin);
-      const along=to.dot(direction);
+      const base=zombie.group.position;
+      const to=new THREE.Vector3(base.x-origin.x,base.y+1.05*zombie.data.scale-origin.y,base.z-origin.z);
+      const along=to.dot(ray);
       if(along<0 || along>nearest) continue;
-      const closest=origin.clone().add(direction.clone().multiplyScalar(along));
-      const radius=0.54*zombie.data.scale;
-      if(closest.distanceToSquared(center)<=radius*radius) {
+      const point=origin.clone().addScaledVector(ray,along);
+      const dx=point.x-base.x, dz=point.z-base.z;
+      const scale=zombie.data.scale;
+      const horizontalRadius=0.58*scale;
+      const vertical=point.y-base.y;
+      if(dx*dx+dz*dz<=horizontalRadius*horizontalRadius && vertical>=0.12*scale && vertical<=2.32*scale) {
         nearest=along;
         target=zombie;
+        hitY=vertical;
       }
     }
     if(!target) return null;
-    const headY=target.group.position.y+1.86*target.data.scale;
-    const headshot=Math.abs((origin.y+direction.y*nearest)-headY)<0.35*target.data.scale;
+    const headshot=Math.abs(hitY-1.86*target.data.scale)<0.38*target.data.scale;
     const actual=Math.round(damage*(headshot?(deadshot?2.15:1.65):1));
     this.damage(target,actual,headshot);
-    return { zombie:target,headshot,damage:actual };
+    return {zombie:target,headshot,damage:actual};
   }
 
   damage(zombie,amount,headshot=false) {
-    if(zombie.dead) return;
+    if(zombie.dead || amount<=0) return;
     zombie.hp-=amount;
-    zombie.hurt=0.11;
+    zombie.hurt=0.18;
     this.onDamageScore?.(headshot?20:10);
-    zombie.torso.material.emissive.setHex(0x8c2929);
-    zombie.torso.material.emissiveIntensity=0.9;
+    const flash=new THREE.Color(0xff5148);
+    for(const entry of zombie.flashMaterials||[]) {
+      if(entry.material.color && entry.color) entry.material.color.copy(entry.color).lerp(flash,0.68);
+      if(entry.material.emissive && entry.emissive) {
+        entry.material.emissive.copy(entry.emissive).lerp(flash,0.48);
+        entry.material.emissiveIntensity=Math.max(entry.emissiveIntensity,0.42);
+      }
+    }
     this.audio?.play("hit");
     if(zombie.hp<=0) this.kill(zombie,headshot);
   }
@@ -161,9 +183,13 @@ export class ZombieDirector {
       if(zombie.dead) continue;
       zombie.attackTimer=Math.max(0,zombie.attackTimer-dt);
       zombie.hurt=Math.max(0,zombie.hurt-dt);
-      if(zombie.hurt<=0 && zombie.torso.material.emissiveIntensity>0) {
-        zombie.torso.material.emissiveIntensity=0;
-        zombie.torso.material.emissive.setHex(0x000000);
+      const flashAmount=Math.min(1,zombie.hurt/0.18);
+      for(const entry of zombie.flashMaterials||[]) {
+        if(entry.material.color && entry.color) entry.material.color.copy(entry.color).lerp(new THREE.Color(0xff5148),flashAmount*0.68);
+        if(entry.material.emissive && entry.emissive) {
+          entry.material.emissive.copy(entry.emissive).lerp(new THREE.Color(0xff5148),flashAmount*0.48);
+          entry.material.emissiveIntensity=entry.emissiveIntensity+flashAmount*0.42;
+        }
       }
       const zpos=zombie.group.position;
       let targetX=targetPos.x,targetZ=targetPos.z;
