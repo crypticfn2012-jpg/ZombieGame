@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { ProgressionSystem } from "../src/game/Progression.js";
 import { WeaponSystem } from "../src/game/Weapons.js";
+import { ZombieDirector } from "../src/game/Zombies.js";
 
 const quietAudio={play(){}};
 
@@ -77,4 +78,18 @@ test("loadout supports a pistol plus three firearm slots and a separate knife",(
   assert.equal(weapons.meleeAttack({damageRay(){return null;}}),false);
   weapons.equipKnife();
   assert.equal(weapons.hud().melee,false);
+});
+
+
+test("shots register against the zombie body at normal first-person crosshair height",()=>{
+  const scene=new THREE.Scene();
+  const director=new ZombieDirector(scene,quietAudio,()=>{},()=>{},()=>{},()=>{});
+  const zombie=director.spawn("standard",{x:0,z:-5},"start",1);
+  const hit=director.damageRay(new THREE.Vector3(0,1.7,0),new THREE.Vector3(0,0,-1),60,34,false);
+  assert.ok(hit);
+  assert.equal(hit.zombie,zombie);
+  assert.equal(hit.damage,34);
+  assert.equal(zombie.hp,61);
+  assert.ok(zombie.hurt>0);
+  assert.ok(zombie.flashMaterials.length>0);
 });
