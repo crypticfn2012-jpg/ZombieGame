@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { ProgressionSystem } from "../src/game/Progression.js";
 import { WeaponSystem } from "../src/game/Weapons.js";
 import { ZombieDirector } from "../src/game/Zombies.js";
+import { FacilityWorld } from "../src/game/World.js";
 
 const quietAudio={play(){}};
 
@@ -93,4 +94,28 @@ test("shots register against the zombie body at normal first-person crosshair he
   assert.equal(zombie.hp,39);
   assert.ok(zombie.hurt>0);
   assert.ok(zombie.flashMaterials.length>0);
+});
+
+
+test("facility map exposes an exterior zombie entry window for every room",()=>{
+  const scene=new THREE.Scene();
+  const world=new FacilityWorld(scene);
+  assert.equal(world.windows.length,9);
+  for(const win of world.windows) {
+    assert.ok(Math.hypot(win.outside.x-win.x,win.outside.z-win.z)>7);
+    assert.ok(Math.hypot(win.inside.x-win.x,win.inside.z-win.z)>1);
+    assert.ok(world.rooms.has(win.roomId));
+  }
+});
+
+test("zombies spawned at a window begin outside and enter through the authored window",()=>{
+  const scene=new THREE.Scene();
+  const world=new FacilityWorld(scene);
+  const director=new ZombieDirector(scene,quietAudio,()=>{},()=>{},()=>{},()=>{});
+  const win=world.windows[0];
+  const zombie=director.spawn("standard",win.outside,win.roomId,1,win);
+  assert.equal(zombie.entryState,"approach");
+  assert.equal(zombie.group.position.x,win.outside.x);
+  assert.equal(zombie.group.position.z,win.outside.z);
+  assert.equal(zombie.entryWindow,win);
 });
