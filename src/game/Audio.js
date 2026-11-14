@@ -75,6 +75,7 @@ export class AudioSystem {
   play(name) {
     switch (name) {
       case "shoot": this.noise(0.075, 0.22, 2800); this.tone(92, 0.08, "sawtooth", 0.11, -55); break;
+      case "mk2": this.noise(0.095, 0.24, 3200); this.tone(145, 0.13, "sawtooth", 0.12, 260); this.tone(620, 0.08, "sine", 0.045, -180); break;
       case "shotgun": this.noise(0.22, 0.3, 1500); this.tone(55, 0.18, "sawtooth", 0.16, -30); break;
       case "reload": this.tone(520, 0.045, "square", 0.045); setTimeout(() => this.tone(330, 0.06, "square", 0.05), 120); break;
       case "hit": this.tone(860, 0.07, "sine", 0.09); break;

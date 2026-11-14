@@ -49,6 +49,7 @@ export class BlacksiteGame {
     this.waveBreak=0;
     this.bossSpawned=false;
     this.runSeconds=0;
+    this.runSaved=false;
     this.interaction=null;
     this.lastFrame=performance.now();
     this.elapsed=0;
@@ -137,7 +138,12 @@ export class BlacksiteGame {
     this.weapons.inventory=[];
     this.weapons.slot=0;
     this.weapons.reloading=false;
+    this.weapons.reloadTimer=0;
+    this.weapons.cooldown=0;
     this.weapons.triggerHeld=false;
+    this.weapons.semiConsumed=false;
+    this.weapons.aiming=false;
+    this.weapons.setAim(false);
     this.weapons.addWeapon("pistol");
     this.world.reset();
     this.progression=new ProgressionSystem(this.world,this.weapons,this.player,this.audio,this.save,(title,desc)=>this.ui.notify(title,desc),(text)=>this.ui.setObjective(text));
@@ -149,6 +155,7 @@ export class BlacksiteGame {
     this.waveBreak=0;
     this.bossSpawned=false;
     this.runSeconds=0;
+    this.runSaved=false;
     this.elapsed=0;
     this.hitPulse=0;
   }
@@ -319,6 +326,7 @@ export class BlacksiteGame {
   }
 
   returnToMenu() {
+    if(this.state==="playing"||this.state==="paused") this.saveRun();
     if(document.pointerLockElement) document.exitPointerLock?.();
     this.player.setActive(false);
     this.weapons.triggerHeld=false;
@@ -336,8 +344,14 @@ export class BlacksiteGame {
     this.weapons.setAim(false);
     if(document.pointerLockElement) document.exitPointerLock?.();
     platform.gameplayStop();
-    this.save.updateRun(this.round,this.kills,this.runSeconds);
+    this.saveRun();
     this.ui.showDeath({round:this.round,kills:this.kills,points:this.progression.totalEarned});
+  }
+
+  saveRun() {
+    if(this.runSaved) return;
+    this.runSaved=true;
+    this.save.updateRun(this.round,this.kills,this.runSeconds);
   }
 
   updateWave(dt) {

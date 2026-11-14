@@ -88,7 +88,8 @@ export class ProgressionSystem {
       this.onNotify?.("ALREADY ACTIVE",PERKS[item.id].effect);
       return false;
     }
-    const capacity=this.perks.has("mule")?5:4;
+    // Mule Kick is allowed to be the fifth perk; it then raises the active-perk cap to five.
+    const capacity=(this.perks.has("mule")||item.id==="mule")?5:4;
     if(this.perks.size>=capacity) {
       this.onNotify?.("PERK LIMIT REACHED","You can carry "+capacity+" active perks.");
       return false;
@@ -145,13 +146,13 @@ export class ProgressionSystem {
   openMysteryBox(item) {
     if(!this.spend(item.price)) return false;
     const pool=[
-      ["revolver",22],["rifle",19],["smg",18],["shotgun",15],["burst",12],["sniper",7],["launcher",5],["experimental",2]
+      ["revolver",16],["rifle",16],["smg",15],["heavySmg",10],["shotgun",10],["autoShotgun",8],["burst",9],["tactical",8],["sniper",4],["launcher",2],["experimental",2]
     ];
     const roll=Math.random()*100;
     let acc=0, selected="rifle";
     for(const [id,chance] of pool) { acc+=chance; if(roll<=acc) {selected=id;break;} }
     const result=this.weapons.purchase(selected,this.perks);
-    const rarity=selected==="experimental"?"EXPERIMENTAL":selected==="launcher"||selected==="sniper"?"RARE":"STANDARD";
+    const rarity=selected==="experimental"?"EXPERIMENTAL":["launcher","sniper","tactical"].includes(selected)?"RARE":"STANDARD";
     item.active=true;
     this.onNotify?.("MYSTERY CRATE / "+rarity,WEAPON_DATA[selected].name+" — "+(result.kind==="ammo"?"AMMO REFILL":"WEAPON ACQUIRED"));
     setTimeout(()=>{item.active=false;},1200);
@@ -170,9 +171,9 @@ export class ProgressionSystem {
   }
 
   documentText(id) {
-    if(id==="document-a") return "INCIDENT 07: Subject R-09 breached isolation at 03:17.";
-    if(id==="document-b") return "SUBJECT R-09: Neural activity continues after cardiac failure.";
-    return "FINAL TRANSMISSION: The signal is not coming from outside. It is beneath us.";
+    if(id==="document-a") return "INCIDENT 07 / 03:17. Isolation on Sublevel C failed after the night crew reported a low-frequency signal in the ventilation system. Subject R-09 breached the observation glass without touching it. Security was ordered to seal the floor.";
+    if(id==="document-b") return "SUBJECT R-09 / POST-MORTEM REVIEW. Cardiac activity stopped, but the subject continued to respond to the signal. The response became stronger when the reactor was powered. The project director ordered all recordings classified.";
+    return "FINAL TRANSMISSION / DR. VALE. Northstar did not create the signal. We amplified it. Something below the reactor has been answering for months. If this reaches the surface, do not restore the uplink."
   }
 
   readTerminal() {

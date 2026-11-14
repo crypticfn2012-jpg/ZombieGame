@@ -310,6 +310,31 @@ export class FacilityWorld {
     return obj;
   }
 
+  addWallBuySilhouette(item, weaponId, color) {
+    const plate=this.mat(0x101a20,0.48,0.55);
+    const profile=this.mat(color,0.46,0.58,0x101010);
+    const edge=this.mat(0xb7c9c8,0.4,0.62);
+    this.box(item.mesh,0,2.58,0.6,2.25,0.86,0.12,plate,{castShadow:false});
+    const long=["shotgun","autoShotgun","sniper","launcher","tactical"].includes(weaponId);
+    const bodyWidth=weaponId==="launcher"?0.95:long?0.82:0.62;
+    this.box(item.mesh,-0.02,2.66,0.7,bodyWidth,0.14,0.12,profile,{castShadow:false});
+    this.box(item.mesh,0.56,2.68,0.7,long?0.72:0.42,0.065,0.075,edge,{castShadow:false});
+    this.box(item.mesh,-0.61,2.65,0.7,0.28,0.11,0.12,profile,{castShadow:false});
+    this.box(item.mesh,-0.12,2.43,0.7,0.17,0.3,0.14,profile,{castShadow:false});
+    this.box(item.mesh,0.09,2.43,0.7,0.2,0.25,0.14,edge,{castShadow:false});
+    if(weaponId==="sniper"||weaponId==="tactical") {
+      this.box(item.mesh,0.02,2.84,0.7,0.42,0.09,0.16,edge,{castShadow:false});
+      this.box(item.mesh,0.02,2.91,0.7,0.16,0.08,0.12,profile,{castShadow:false});
+    }
+    if(weaponId==="shotgun"||weaponId==="autoShotgun") {
+      this.box(item.mesh,-0.08,2.48,0.7,0.12,0.15,0.16,profile,{castShadow:false});
+    }
+    if(weaponId==="launcher") {
+      this.box(item.mesh,0.08,2.66,0.7,0.72,0.24,0.22,profile,{castShadow:false});
+      this.box(item.mesh,0.55,2.66,0.7,0.12,0.28,0.24,edge,{castShadow:false});
+    }
+  }
+
   buildMachines() {
     this.addMachine("jugger","perk","JUGGERNAUT", "medical", -5,-3,0xb4473e,2500,"INCREASE MAXIMUM HEALTH");
     this.addMachine("speed","perk","SPEED COLA", "storage",5,-4,0x31b76b,2000,"FASTER RELOADS");
@@ -334,11 +359,15 @@ export class FacilityWorld {
       ["buy-burst","burst","BURST RIFLE","research",-5,-3,0x66a7b7,1900],
       ["buy-sniper","sniper","TACTICAL DMR","testing",0,5,0x9a9cb0,2400],
       ["buy-launcher","launcher","GRENADE LAUNCHER","pap",-5,3,0x8eab77,3200],
-      ["buy-revolver","revolver","HEAVY REVOLVER","medical",0,5,0x9c8167,1800]
+      ["buy-revolver","revolver","HEAVY REVOLVER","medical",0,5,0x9c8167,1800],
+      ["buy-tactical","tactical","TACTICAL CARBINE","storage",5,3,0x758b9c,2300],
+      ["buy-heavy-smg","heavySmg","DRUM SMG","power",5,3,0xb09156,2000],
+      ["buy-auto-shotgun","autoShotgun","BREACH AUTO SHOTGUN","research",0,5,0x9d644b,2600]
     ];
     for(const [id,weapon,name,room,x,z,color,cost] of buys) {
       const item=this.addMachine(id,"wallbuy",name,room,x,z,color,cost,"PURCHASE " + name);
       item.weapon=weapon;
+      this.addWallBuySilhouette(item,weapon,color);
       item.mesh.scale.set(0.68,0.7,0.68);
     }
   }

@@ -12,7 +12,9 @@ A browser-first, first-person voxel survival game set inside a sealed Northstar 
 - Five standard infected variants: infected, rusher, armoured, volatile and elite.
 - Three boss encounters at rounds 5, 10 and 15: The Brute, The Experiment and The Overseer.
 - Point rewards, headshot bonuses, seven perk machines, power relay, Pack-a-Punch, Mystery Crate and purchasable doors.
-- Seven wall-buy weapons, a starting pistol and an experimental Mystery Crate weapon.
+- Ten wall-buy weapons across pistols, rifles, SMGs and shotguns, plus a starting pistol and an experimental Mystery Crate weapon.
+- Shotgun pellet simulation, distinct wall-mounted weapon silhouettes and MK-II firing feedback.
+- Run statistics are saved on both death and an intentional return to the main menu.
 - Local progress/settings saves, with CrazyGames Data-module storage when the CrazyGames SDK is initialized.
 - Procedural Web Audio for combat, reload, damage, purchases, power and round events.
 - Responsive HUD, main menu, field manual, settings, pause and death screens.
@@ -55,6 +57,7 @@ Vite prints a local URL, normally http://localhost:5173.
 ## Production build
 
 ~~~bash
+npm test
 npm run build
 npm run preview
 ~~~
@@ -63,7 +66,7 @@ The production build is written to dist/. Upload the contents of dist/ as the HT
 
 ## GitHub Pages
 
-A GitHub Actions workflow builds the project and deploys dist/ to GitHub Pages on pushes to main. In the repository's Settings → Pages, set the source to GitHub Actions.
+A GitHub Actions workflow runs the automated gameplay-system tests, builds the project, and deploys dist/ to GitHub Pages on pushes to main. In the repository's Settings → Pages, set the source to GitHub Actions.
 
 For a custom deployment, run npm run build and publish the generated dist/ directory.
 
@@ -100,6 +103,10 @@ src/
   ui/
     GameUI.js             HUD and menu state
 ~~~
+
+## Automated checks
+
+`npm test` runs Node's built-in test runner against perk-cap progression, shotgun pellet firing, and Pack-a-Punch damage scaling. The GitHub Pages workflow runs these checks before the production build. These are focused logic tests, not a replacement for hands-on browser or CrazyGames QA.
 
 ## Notes before submission
 

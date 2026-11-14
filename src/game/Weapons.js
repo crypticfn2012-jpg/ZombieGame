@@ -7,6 +7,9 @@ export const WEAPON_DATA = {
   smg: { name:"COMPACT SMG", damage:22, fireRate:0.075, reload:1.55, mag:42, reserve:210, spread:0.028, pellets:1, automatic:true, range:42, color:0xa58b55, sound:"shoot", price:1400 },
   shotgun: { name:"PUMP SHOTGUN", damage:19, fireRate:0.72, reload:2.1, mag:8, reserve:64, spread:0.075, pellets:9, automatic:false, range:25, color:0x9a6942, sound:"shotgun", price:1700 },
   burst: { name:"BURST RIFLE", damage:30, fireRate:0.085, reload:1.8, mag:27, reserve:162, spread:0.016, pellets:1, automatic:false, burst:3, range:60, color:0x57909c, sound:"shoot", price:1900 },
+  tactical: { name:"TACTICAL CARBINE", damage:54, fireRate:0.22, reload:1.85, mag:24, reserve:144, spread:0.01, pellets:1, automatic:false, range:82, color:0x758b9c, sound:"shoot", price:2300 },
+  heavySmg: { name:"DRUM SMG", damage:19, fireRate:0.06, reload:1.9, mag:60, reserve:300, spread:0.031, pellets:1, automatic:true, range:43, color:0xb09156, sound:"shoot", price:2000 },
+  autoShotgun: { name:"BREACH AUTO SHOTGUN", damage:13, fireRate:0.19, reload:2.25, mag:10, reserve:80, spread:0.088, pellets:8, automatic:true, range:23, color:0x9d644b, sound:"shotgun", price:2600 },
   sniper: { name:"TACTICAL DMR", damage:145, fireRate:0.85, reload:2.25, mag:5, reserve:35, spread:0.003, pellets:1, automatic:false, range:110, color:0x9d9eae, sound:"shoot", price:2400 },
   launcher: { name:"GRENADE LAUNCHER", damage:170, fireRate:0.9, reload:2.3, mag:1, reserve:12, spread:0.01, pellets:1, automatic:false, range:58, explosive:5.5, color:0x88a77b, sound:"shotgun", price:3200 },
   experimental: { name:"PHASE DISRUPTOR", damage:110, fireRate:0.19, reload:1.7, mag:24, reserve:144, spread:0.006, pellets:1, automatic:true, range:75, energy:true, color:0x43dce3, sound:"power", price:0 }
@@ -45,7 +48,7 @@ export class WeaponSystem {
     const existing=this.inventory.findIndex(w=>w.id===id);
     if(existing>=0) {
       const item=this.inventory[existing];
-      item.reserve=Math.min(item.reserve+item.mag*2, item.reserve+item.mag*2);
+      item.reserve=Math.min(item.reserve+item.mag*2,999);
       item.ammo=item.mag;
       this.slot=existing;
       this.refreshModel();
@@ -68,7 +71,13 @@ export class WeaponSystem {
     while(this.model.children.length) {
       const obj=this.model.children.pop();
       this.model.remove(obj);
-      obj.traverse?.(child=>{ child.geometry?.dispose?.(); });
+      const materials=new Set();
+      obj.traverse?.(child=>{
+        child.geometry?.dispose?.();
+        if(Array.isArray(child.material)) child.material.forEach(material=>materials.add(material));
+        else if(child.material) materials.add(child.material);
+      });
+      for(const material of materials) material.dispose?.();
     }
     const gun=this.current;
     if(!gun) return;
@@ -93,7 +102,19 @@ export class WeaponSystem {
       add(0,0.16,-0.02,0.08,0.11,0.25,dark);
       add(0,0.22,-0.03,0.22,0.08,0.13,trim);
     }
-    if(gun.id==="shotgun") add(0,-0.01,0.43,0.13,0.11,0.28,body);
+    if(gun.id==="shotgun"||gun.id==="autoShotgun") {
+      add(0,-0.01,0.43,0.13,0.11,gun.id==="autoShotgun"?0.38:0.28,body);
+      if(gun.id==="autoShotgun") add(0,-0.12,0.02,0.16,0.09,0.46,trim);
+    }
+    if(gun.id==="tactical") {
+      add(0,0.16,-0.02,0.12,0.12,0.3,dark);
+      add(0,0.23,-0.02,0.23,0.08,0.12,trim);
+      add(0,-0.16,0.08,0.13,0.13,0.2,body);
+    }
+    if(gun.id==="heavySmg") {
+      add(0,-0.19,0.04,0.25,0.2,0.24,body);
+      add(0,0.12,-0.08,0.22,0.07,0.34,trim);
+    }
     if(gun.id==="launcher") {
       add(0,0.01,-0.2,0.23,0.19,0.58,body);
       add(0,0.02,-0.52,0.25,0.22,0.12,trim);
@@ -155,21 +176,24 @@ export class WeaponSystem {
       return false;
     }
     const burst=gun.burst||1;
+    const pellets=gun.pellets||1;
     this.cooldown=gun.fireRate*(burst>1?1.6:1);
     const totalDamage=gun.damage*(perks.has("double")?1.65:1)*(gun.upgraded?1.5:1);
     const direction=new THREE.Vector3();
     this.camera.getWorldDirection(direction);
-    for(let i=0;i<burst;i++) {
-      const spread=gun.spread*(this.aiming?0.56:1);
-      const rayDir=direction.clone().add(new THREE.Vector3((Math.random()-0.5)*spread,(Math.random()-0.5)*spread,(Math.random()-0.5)*spread)).normalize();
-      const damage=totalDamage*(gun.id==="sniper"?1.08:1);
-      const didHit=zombies.damageRay(this.camera.getWorldPosition(new THREE.Vector3()),rayDir,gun.range,damage,perks.has("deadshot"));
-      if(didHit) this.onHit?.(didHit);
-      if(gun.explosive) zombies.damageArea(this.camera.position.clone().add(rayDir.clone().multiplyScalar(Math.min(gun.range,28))),gun.explosive,totalDamage*0.85);
+    for(let shot=0;shot<burst;shot++) {
+      for(let pellet=0;pellet<pellets;pellet++) {
+        const spread=gun.spread*(this.aiming?0.56:1);
+        const rayDir=direction.clone().add(new THREE.Vector3((Math.random()-0.5)*spread,(Math.random()-0.5)*spread,(Math.random()-0.5)*spread)).normalize();
+        const damage=totalDamage*(gun.id==="sniper"?1.08:1);
+        const didHit=zombies.damageRay(this.camera.getWorldPosition(new THREE.Vector3()),rayDir,gun.range,damage,perks.has("deadshot"));
+        if(didHit) this.onHit?.(didHit);
+        if(gun.explosive && shot===0 && pellet===0) zombies.damageArea(this.camera.position.clone().add(rayDir.clone().multiplyScalar(Math.min(gun.range,28))),gun.explosive,totalDamage*0.85);
+      }
     }
     gun.ammo--;
     if(!gun.automatic) this.semiConsumed=true;
-    this.audio?.play(gun.sound);
+    this.audio?.play(gun.upgraded?"mk2":gun.sound);
     this.muzzleTime=0.055;
     if(this.muzzle) this.muzzle.visible=true;
     if(this.muzzleLight) this.muzzleLight.intensity=gun.upgraded?5:3;
@@ -228,7 +252,8 @@ export class WeaponSystem {
     const gun=this.current;
     if(!gun || gun.upgraded) return false;
     gun.upgraded=true;
-    gun.damage=Math.round(gun.baseDamage*1.5);
+    // The fire path applies the MK-II multiplier. Keep base damage unchanged to avoid stacking it twice.
+    gun.damage=gun.baseDamage;
     gun.mag=Math.round(gun.mag*1.35);
     gun.ammo=gun.mag;
     gun.reserve=Math.min(999,gun.reserve+gun.mag*2);
