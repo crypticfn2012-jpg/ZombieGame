@@ -257,7 +257,7 @@ export class ProgressionSystem {
     const current=steps[Math.min(next,steps.length-1)];
     const objective=next===0?"SURVIVE "+Math.min(this.roundsSurvived,3)+"/3 WAVES":
       next===2?"RECOVER "+Math.min(this.documentsCollected.size,3)+"/3 CLASSIFIED FILES":current.objective;
-    this.onMission?.(Math.min(next+1,steps.length),steps.length,current.title);
+    this.onMission?.(Math.min(next+1,steps.length-1),steps.length-1,current.title);
     this.onObjective?.(objective);
   }
 
