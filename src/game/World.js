@@ -511,11 +511,13 @@ export class FacilityWorld {
       this.box(group,-0.58,1.1,0.52,0.08,0.72,0.06,this.materials.amber,{castShadow:false});
       this.box(group,0.58,1.1,0.52,0.08,0.72,0.06,this.materials.amber,{castShadow:false});
     }
-    const light=new THREE.PointLight(color,1.6,5);
-    light.position.set(0,2,0);
-    group.add(light);
-    const rotor=this.box(group,0,2.05,0,0.26,0.08,0.26,this.materials.cyan,{castShadow:false});
-    const obj={id,type,name,price:cost,description,position:new THREE.Vector3(room.x+x,1.3,room.z+z),mesh:group,rotor,roomId,active:false};
+    let light=null,rotor=null;
+    if(type!=="wallbuy") {
+      light=new THREE.PointLight(color,1.2,4.5);
+      light.position.set(0,2,0);group.add(light);
+      rotor=this.box(group,0,2.05,0,0.26,0.08,0.26,this.materials.cyan,{castShadow:false});
+    }
+    const obj={id,type,name,price:cost,description,position:new THREE.Vector3(room.x+x,1.3,room.z+z),mesh:group,rotor,roomId,active:false,light};
     this.interactables.push(obj);
     this.machineRefs[id]=obj;
     return obj;
@@ -541,8 +543,16 @@ export class FacilityWorld {
     if(weaponId==="shotgun"||weaponId==="autoShotgun"){line(-0.12,1.56,0.12,0.15);line(0.02,1.55,0.12,0.13);}
     if(weaponId==="launcher"){line(0.02,1.96,0.82,0.28);line(0.62,1.96,0.12,0.34);}
     // Small chalk price ticks and a colour-coded weapon family strip.
-    const price=item.price.toString();
-    for(let i=0;i<Math.min(price.length,5);i++)this.box(item.mesh,-0.72+i*0.32,0.72,0.2,0.2,0.055,0.04,chalk,{castShadow:false});
+    const digits=item.price.toString();
+    const segments={a:[0,0.09,0.19,0.045],b:[0.095,0.045,0.045,0.16],c:[0.095,-0.14,0.045,0.16],d:[0,-0.235,0.19,0.045],e:[-0.095,-0.14,0.045,0.16],f:[-0.095,0.045,0.045,0.16],g:[0,-0.075,0.19,0.045]};
+    const active={0:"abcdef",1:"bc",2:"abged",3:"abgcd",4:"fgbc",5:"afgcd",6:"afgecd",7:"abc",8:"abcdefg",9:"abfgcd"};
+    const startX=-(digits.length-1)*0.28;
+    [...digits].forEach((digit,index)=>{
+      for(const key of active[digit]||"abcdefg"){
+        const [dx,dy,sx,sy]=segments[key];
+        this.box(item.mesh,startX+index*0.56+dx,0.78+dy,0.2,sx,sy,0.04,chalk,{castShadow:false});
+      }
+    });
     this.box(item.mesh,0,0.48,0.2,2.15,0.055,0.04,this.mat(color),{castShadow:false});
   }
   buildMachines() {
@@ -563,20 +573,30 @@ export class FacilityWorld {
     this.addMachine("document-b","document","SUBJECT R-09","testing",5,3,0xd7ca9a,0,"COLLECT RESEARCH DOCUMENT");
     this.addMachine("document-c","document","FINAL TRANSMISSION","arena",0,5,0xd7ca9a,0,"COLLECT RESEARCH DOCUMENT");
     const buys = [
-      ["buy-rifle","rifle","SERVICE RIFLE","start",7,-5,0x9b9a80,1200],
-      ["buy-smg","smg","COMPACT SMG","storage",-5,4,0xb7a05d,1400],
-      ["buy-shotgun","shotgun","PUMP SHOTGUN","lab",5,-4,0xc18b48,1700],
-      ["buy-burst","burst","BURST RIFLE","research",-5,-4,0x8e9d8c,1900],
-      ["buy-sniper","sniper","TACTICAL DMR","testing",0,5,0x9a9c90,2400],
-      ["buy-launcher","launcher","GRENADE LAUNCHER","pap",-5,4,0x8eab77,3200],
-      ["buy-revolver","revolver","HEAVY REVOLVER","medical",0,5,0x9c8167,1800],
-      ["buy-tactical","tactical","TACTICAL CARBINE","storage",5,4,0x758b7c,2300],
-      ["buy-heavy-smg","heavySmg","DRUM SMG","power",5,4,0xb09156,2000],
-      ["buy-auto-shotgun","autoShotgun","BREACH AUTO SHOTGUN","arena",0,5,0x9d644b,2600]
+      ["buy-rifle","rifle","SERVICE RIFLE","start",0,"east",0x9b9a80,1200],
+      ["buy-smg","smg","COMPACT SMG","storage",-4,"east",0xb7a05d,1400],
+      ["buy-shotgun","shotgun","PUMP SHOTGUN","lab",4,"west",0xc18b48,1700],
+      ["buy-burst","burst","BURST RIFLE","research",-4,"west",0x8e9d8c,1900],
+      ["buy-sniper","sniper","TACTICAL DMR","testing",0,"west",0x9a9c90,2400],
+      ["buy-launcher","launcher","GRENADE LAUNCHER","pap",-4,"east",0x8eab77,3200],
+      ["buy-revolver","revolver","HEAVY REVOLVER","medical",0,"east",0x9c8167,1800],
+      ["buy-tactical","tactical","TACTICAL CARBINE","storage",4,"east",0x758b7c,2300],
+      ["buy-heavy-smg","heavySmg","DRUM SMG","power",4,"west",0xb09156,2000],
+      ["buy-auto-shotgun","autoShotgun","BREACH AUTO SHOTGUN","arena",6,"north",0x9d644b,2600]
     ];
-    for(const [id,weapon,name,room,x,z,color,cost] of buys) {
-      const item=this.addMachine(id,"wallbuy",name,room,x,z,color,cost,"PURCHASE " + name);
+    for(const [id,weapon,name,roomId,offset,side,color,cost] of buys) {
+      const room=this.rooms.get(roomId);
+      const item=this.addMachine(id,"wallbuy",name,roomId,0,0,color,cost,"PURCHASE "+name);
       item.weapon=weapon;
+      const mount={
+        north:{x:room.x+offset,z:room.z-8.35,rotation:0},
+        south:{x:room.x+offset,z:room.z+8.35,rotation:Math.PI},
+        east:{x:room.x+8.35,z:room.z+offset,rotation:-Math.PI/2},
+        west:{x:room.x-8.35,z:room.z+offset,rotation:Math.PI/2}
+      }[side];
+      item.mesh.position.set(mount.x,0,mount.z);
+      item.mesh.rotation.y=mount.rotation;
+      item.position.set(mount.x,1.3,mount.z);
       this.addWallBuySilhouette(item,weapon,color);
       item.mesh.scale.set(0.9,0.9,0.9);
     }
