@@ -28,7 +28,7 @@ export class BlacksiteGame {
     this.world=new FacilityWorld(this.scene);
     this.player=new PlayerController(this.camera,this.canvas,this.world,this.save.data.settings,(amount)=>this.onPlayerDamage(amount));
     this.weapons=new WeaponSystem(this.camera,this.audio,(data)=>this.ui?.setAmmo(data),(hit)=>this.onWeaponHit(hit));
-    this.progression=new ProgressionSystem(this.world,this.weapons,this.player,this.audio,this.save,(title,desc)=>this.ui?.notify(title,desc),(text)=>this.ui?.setObjective(text));
+    this.progression=new ProgressionSystem(this.world,this.weapons,this.player,this.audio,this.save,(title,desc)=>this.ui?.notify(title,desc),(text)=>this.ui?.setObjective(text),(stage,total,title)=>this.ui?.setMission(stage,total,title));
     this.zombies=new ZombieDirector(this.scene,this.audio,(zombie,points,headshot)=>this.onZombieKill(zombie,points,headshot),(damage,zombie)=>this.player.damage(damage),(boss)=>this.ui?.setBoss(boss),(points)=>{this.progression.points+=points;this.progression.totalEarned+=points;});
     this.ui=new GameUI(this.save,{
       onStart:()=>this.startRun(),
@@ -151,7 +151,7 @@ export class BlacksiteGame {
     this.weapons.setAim(false);
     this.weapons.addWeapon("pistol");
     this.world.reset();
-    this.progression=new ProgressionSystem(this.world,this.weapons,this.player,this.audio,this.save,(title,desc)=>this.ui.notify(title,desc),(text)=>this.ui.setObjective(text));
+    this.progression=new ProgressionSystem(this.world,this.weapons,this.player,this.audio,this.save,(title,desc)=>this.ui.notify(title,desc),(text)=>this.ui.setObjective(text),(stage,total,title)=>this.ui.setMission(stage,total,title));
     this.round=0;
     this.kills=0;
     this.roundKills=0;
@@ -171,7 +171,7 @@ export class BlacksiteGame {
     this.state="playing";
     this.player.setActive(true);
     this.ui.showGame();
-    this.ui.setObjective("HOLD THE CHECKPOINT. OPEN THE FACILITY TO EXPAND.");
+    this.progression.refreshMission();
     this.ui.setRound(1,"FIRST WAVE INCOMING");
     this.ui.setPoints(this.progression.points);
     this.ui.setHealth(this.player.health,this.player.maxHealth);
@@ -192,6 +192,9 @@ export class BlacksiteGame {
     this.audio.play("round");
     this.ui.setRound(this.round,"INCOMING");
     this.ui.notify("ROUND "+String(this.round).padStart(2,"0"),"Hostiles are gathering outside. Watch the windows.");
+    if(this.round===3) this.ui.notify("INCOMING / DR. VALE","If you can hear this, the lower levels are already compromised. Do not trust the personnel files.");
+    if(this.round===5) this.ui.notify("RADIO INTERFERENCE","The signal is using the emergency broadcast system. It knows you are here.");
+    if(this.round===10) this.ui.notify("FINAL TRANSMISSION","The reactor is not the source. It is a door. Shut it before the next pulse.");
     if(this.round%5===0) {
       const bossType=this.round>=15?"overseer":this.round>=10?"experiment":"brute";
       this.spawnBoss(bossType);
@@ -232,7 +235,8 @@ export class BlacksiteGame {
     this.ui.setPoints(this.progression.points);
     
     if(zombie.data.boss) {
-      this.ui.notify("BOSS ELIMINATED","Facility threat level reduced.");
+      this.ui.notify("HOSTILE ELIMINATED","The signal weakens, but it is not gone.");
+      this.progression.onBossDefeated(zombie.type);
       this.progression.player.heal(35);
       this.progression.player.addArmor(25);
       this.audio.play("round");
@@ -373,6 +377,7 @@ export class BlacksiteGame {
         this.ui.setRound(this.round,"AREA SECURE");
         this.ui.notify("AREA SECURE","25 seconds until the next wave. Use the time to buy, reload and open new areas.");
         this.progression.applyRoundBonus(this.round);
+        this.progression.onRoundComplete(this.round);
         this.ui.setPoints(this.progression.points);
         this.player.heal(15);
         this.player.addArmor(5);
